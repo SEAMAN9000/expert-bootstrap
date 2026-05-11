@@ -69,7 +69,41 @@ code review, TDD, debugging, planning, verification, parallel dispatch, doc/slid
 
 ### Modifying the roster
 
-Re-run `/expert-bootstrap` to regenerate. Do not hand-edit `{{EXPERT_DIR}}<expert>.md` — it drifts from the prompt-engineer-optimized baseline. For a single expert's tuning, dispatch `prompt-engineer` with the existing prompt + the desired change, then overwrite the file with its output.
+Three legitimate paths — pick by intent, never bypass.
+
+**A · Wholesale regenerate** — re-run `/expert-bootstrap`. Rewrites `brief/goal.md` and every `{{EXPERT_DIR}}*.md`; loses any tuning. Use only when the roster is broadly miscast.
+
+**B · Tune one expert** — dispatch `prompt-engineer` with that expert's existing prompt + your desired change; overwrite the file with the result. **Tune only — do not add or remove via this path.**
+
+**C · Add one expert (add-one)** — when the user asks to add / hire / staff one more expert (English or other languages), the main agent does NOT convene a meeting; it runs this recipe itself:
+
+1. **Intent check** — did the user state what the new expert is responsible for?
+   - Yes → step 2.
+   - No → ask once: "What does this expert mainly own? How would it split work with <closest existing expert>?" Get the answer before proceeding. Do not let meta-agents invent responsibilities from thin air.
+2. **Snapshot existing roster** — read all frontmatter from `{{EXPERT_DIR}}*.md` and build `existing_roster:` (each entry: `name / title / decides / responsibilities / must_not`).
+3. **Dispatch `project-manager` (extend mode)** with one combined input:
+   - `mode: extend`
+   - `runtime_mode: portable`
+   - `existing_roster:` (from step 2)
+   - `addition_request: <user's sentence + any clarifications from step 1>`
+   - The contents of `brief/goal.md` as project context.
+   It returns a single `new_expert:` YAML plus optional `sibling_adjustments_suggested:`.
+4. **Boundary preview** — display `new_expert.must_not` and `sibling_adjustments_suggested` to the user verbatim and ask "boundaries OK? (y / change)". This is the only human gate on this path. On reject, redispatch step 3 with the user's correction; on approve, proceed.
+5. **Dispatch `prompt-engineer` (Mode C)** with:
+   - `existing_roster:` (same as step 2)
+   - `extension_rationale: <new_expert.why_needed from step 3>`
+   - `role_brief_for_prompt_engineer:` (from `new_expert`)
+   - `runtime_mode: portable`
+   Returns a complete agent file with valid frontmatter.
+6. **Write to disk** — write `{{EXPERT_DIR}}<new-name>.md` (strip outer markdown fence). Never overwrite an existing expert file — on name collision, prompt-engineer's contract returns `NEED CLARIFICATION:` already; handle it in step 5.
+7. **Update the roster table** — append one row `| <name> | <title> | <why_needed> |` to the `### Roster` table above. If `sibling_adjustments_suggested` was approved in step 4, run path B against each named sibling to fold the suggested `must_not` addition into its prompt — do not hand-edit the sibling's file.
+8. **Announce** — `✅ <new-name> ready, roster is now <N+1>. Council convening rules (skeptic auto-included when ≥3 dispatched) already cover the new seat.`
+
+**Any step returning `NEED CLARIFICATION:`** → forward that line verbatim to the user, wait for the answer, redispatch from the same step. Cap at two retries; on the third, halt and report. Never hallucinate a fallback.
+
+**Any step failing** → halt and tell the user which step and why; never silently persist a half-finished add.
+
+**Forbidden on this path**: skipping step 4 (boundary preview); skipping step 2 (existing-roster snapshot); using `prompt-engineer` Mode B (non-incremental) to generate the new expert (bypasses naming / overlap / must_not checks); hand-editing `{{EXPERT_DIR}}*.md`.
 
 ## Project artifacts
 

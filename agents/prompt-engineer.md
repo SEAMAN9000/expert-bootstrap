@@ -12,6 +12,7 @@ The invoker gives you one of:
 - **A draft prompt** to refine
 - **A draft goal statement** to refine (invoker will say "output: a refined project goal statement, not an agent system prompt")
 - **A role brief**: role name, intended responsibilities, project context, expected outputs, plus optional runtime mode hint
+- **An incremental-expert brief**: same fields as a role brief, PLUS an `existing_roster:` list (each entry: `name`, `title`, `decides`, top-level `responsibilities`, top-level `must_not.territory`) and an `extension_rationale:` sentence explaining why the current roster cannot cover the new decision class. Invoker will mark this Mode C.
 
 ## What you return
 
@@ -59,3 +60,13 @@ Then the prompt body, in this order:
 - Does the prompt tell the agent what success looks like?
 
 If all six answer yes, return. Otherwise revise.
+
+### Mode C — incremental expert (add one to an existing roster)
+
+Same output contract as Mode B (frontmatter + body, kebab-case `name`, `Decides:` sentence, etc.), with three additional hard constraints that you MUST enforce by reading the supplied `existing_roster:`:
+
+1. **Name uniqueness** — the new `name` MUST NOT equal any `name` in `existing_roster`, and MUST NOT collide with host-skill identifiers (same check as Mode B). On collision: return `NEED CLARIFICATION: name <X> collides with existing expert / host skill — propose alternative`.
+2. **Territory non-overlap** — the new expert's `responsibilities` must not overlap ≥50% with any single existing expert's `responsibilities` (heuristic: count shared decision classes; if half or more of the new bullets map to one existing expert's domain, that is a duplicate). On overlap: return `NEED CLARIFICATION: responsibilities overlap with <existing-name> — clarify what decision class is genuinely new`.
+3. **Edge coordination** — the new expert's `must_not` block MUST contain at least one entry whose `owned_by` references a `name` from `existing_roster` (proves the new expert has thought about where its territory ends and a sibling's begins). If you cannot identify a credible adjacent sibling, return `NEED CLARIFICATION: cannot identify edge — which existing expert sits closest to this new domain?`.
+
+If all three checks pass, emit the Mode B output exactly as specified. Do not modify or reference existing experts beyond the `must_not.owned_by` linkage.
