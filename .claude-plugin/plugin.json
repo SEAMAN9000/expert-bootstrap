@@ -1,7 +1,7 @@
 {
   "name": "expert-bootstrap",
-  "description": "Bootstrap a project-local council of generated domain experts for Claude Code. Two meta-agents (prompt-engineer + project-manager) generate a tailored expert roster per project, written to .claude/agents/ for native subagent dispatching.",
-  "version": "0.1.0",
+  "description": "Bootstrap a project-local council of generated domain experts. Cross-platform: two meta-agents (prompt-engineer + project-manager) generate a tailored expert roster per project, written to ./.claude/agents/ on Claude Code or ./agents/ on portable hosts (Codex CLI, Gemini CLI, OpenCode).",
+  "version": "0.2.0",
   "author": {
     "name": "SEAMAN9000"
   },
@@ -10,11 +10,22 @@
   "license": "MIT",
   "keywords": [
     "claude-code",
+    "codex-cli",
+    "gemini-cli",
+    "opencode",
     "skills",
     "agents",
     "expert-council",
     "bootstrap",
     "multi-agent",
-    "project-setup"
-  ]
+    "project-setup",
+    "cross-platform"
+  ],
+  "x-runtime-compatibility": {
+    "claude-code": "supported",
+    "codex-cli": "portable",
+    "gemini-cli": "portable",
+    "opencode": "portable",
+    "notes": "File generation is portable across listed runtimes. Native subagent dispatch is host-specific; portable mode writes paste-ready agent files but invocation syntax depends on the host."
+  }
 }
