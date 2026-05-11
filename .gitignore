@@ -1,0 +1,21 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Claude Code project-local state (do not ship test runs)
+.claude/
+brief/
+CLAUDE.md
+
+# Logs / scratch
+*.log
+.tmp/
+scratch/
