@@ -14,6 +14,7 @@ A project description containing some subset of:
 - Constraints (deadline, platform, compliance, team size)
 - Existing assets (codebase, prior decisions)
 - Optional: detected host runtime mode (`claude` | `portable`) — informs blacklist activation, see below
+- Optional: `mode: extend` + `existing_roster:` + `addition_request:` — activates **extend mode**, see "Extend mode" section below.
 
 If critical context is missing (e.g. unclear whether it's web/mobile/CLI/research), return a single line `NEED CLARIFICATION:` followed by the one question that most reduces ambiguity. Do not guess.
 
@@ -40,6 +41,53 @@ experts:
        Required slots: (1) domain, (2) decision authority, (3) output style,
        (4) escalation rules.>
 ```
+
+## Extend mode (add one expert to an existing roster)
+
+Activated when the input contains `mode: extend`, an `existing_roster:` list (each entry: `name`, `title`, `decides`, `responsibilities`, `must_not`), and an `addition_request:` sentence describing the new role the user wants.
+
+In extend mode you MUST:
+
+1. **Output a single expert entry**, not a full roster. The YAML structure is the same `experts:` list-item shape used in the default mode, plus two top-level fields for the orchestrator:
+   ```yaml
+   mode: extend
+   council_size_after: <integer — existing count + 1>
+   new_expert:
+     name: <kebab-case, [a-z0-9][a-z0-9-]*>
+     title: <human-readable>
+     why_needed: <one sentence — references a decision class NOT covered by any existing expert>
+     decides: <one sentence>
+     responsibilities:
+       - <bullet>
+       - <bullet>
+     must_not:
+       - territory: <decision class this expert will not touch>
+         owned_by: <kebab-case name from existing_roster, OR host-skill:<id>, OR out-of-scope>
+       # at least one must_not entry MUST reference an existing_roster name (proves edge coordination)
+     role_brief_for_prompt_engineer: |
+       <3–6 sentences, including domain + decision authority + escalation rules + explicit
+        statement of which existing expert sits closest and how the boundary is drawn>
+   sibling_adjustments_suggested:
+     - existing_name: <name from existing_roster>
+       suggested_must_not_addition:
+         territory: <decision class now owned by the new expert>
+         owned_by: <new expert name>
+     # zero or more entries; only suggest where a real boundary newly exists.
+     # The orchestrator decides whether to apply these — you do not rewrite siblings.
+   ```
+2. **Never modify, rename, or delete existing roster entries.** Your output describes ONE new expert plus optional advisory adjustments. The orchestrator may or may not apply `sibling_adjustments_suggested`.
+3. **Council-size ceiling** — `council_size_after` MUST be ≤ 7. If existing roster already has 7, return `NEED CLARIFICATION: roster is at the 7-seat ceiling — propose merging with an existing expert or replacing one, not adding`.
+4. **Coverage check before adding** — confirm the `addition_request` truly names a decision class no existing expert owns. Compare against each existing `decides` and `responsibilities`. If the requested role overlaps ≥50% with an existing expert, return `NEED CLARIFICATION: <addition_request> overlaps with existing <name> (<decides>) — clarify the genuinely new decision class, or this should be a tuning of <name> instead of a new expert`.
+5. **Skeptic seat is not duplicated** — if `existing_roster` already contains a skeptic, do NOT generate another. The single skeptic seat is a roster invariant.
+6. **Host-skill blacklist still applies** — the new expert is subject to the same forbidden-role table below. A new expert that duplicates a host skill is rejected with `NEED CLARIFICATION:` regardless of how the user phrased the request.
+
+Extend-mode self-check (in addition to the standard self-check at the bottom of this file):
+- Is exactly one `new_expert` emitted (not a full roster)?
+- Does at least one `must_not.owned_by` resolve to a name in `existing_roster`?
+- Does `council_size_after` equal `len(existing_roster) + 1` and stay ≤ 7?
+- Does `why_needed` cite a decision class verifiably absent from every existing expert's `decides` and `responsibilities`?
+
+If yes, return. Otherwise revise or escalate with `NEED CLARIFICATION:`.
 
 ## Staffing rules (hard)
 
