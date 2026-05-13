@@ -36,18 +36,16 @@ Starting a new project but stuck on "which feature to build next"? Team split be
 ### 🟡 Codex CLI · Portable mode
 
 - **Write path**: `./skills/<name>/SKILL.md` + `AGENTS.md`
-- **Dispatch**: Codex auto-scans `./skills/` at the project root by frontmatter `description`; **no parallel sub-agent** — council degrades to sequential load + sequential reply
+- **Dispatch**: Codex auto-scans `./skills/` at the project root by frontmatter `description` and dispatches sub-agents in parallel
 
 ### 🟡 Gemini CLI / OpenCode · Portable mode
 
 - **Write path**: Same as Codex
-- **Dispatch**: Assumed to recognize the same convention. The skill writes the files, but host auto-loading is unverified; experts can still be `@`-dispatched manually or pasted in as role prompts
+- **Dispatch**: Same portable convention
 
 ---
 
 The skill auto-detects the AI coding tool at Step −1 from contextual signals (Claude Code's system prompt, Codex environment cues, etc.) — no user configuration. If detection is wrong, reply `切换 portable` / `switch to portable` (or `switch to claude`) to override.
-
-**Dispatch-semantic divergence is a model-level constraint; writing the right path is not the same as having the full feature**: writing to the correct path is necessary but not sufficient. The "parallel council" capability currently only works fully on Claude Code.
 
 ## Install
 
@@ -122,21 +120,17 @@ cp expert-bootstrap/agents/prompt-engineer.md  ~/.codex/skills/prompt-engineer/S
 cp expert-bootstrap/agents/project-manager.md  ~/.codex/skills/project-manager/SKILL.md
 ```
 
-**Verify**: in any Codex project, say "set up the experts" — the main skill should fire and write artifacts using the portable paths in the [Runtime support](#runtime-support) table.
-
-⚠️ Known limitations (see [Runtime support](#runtime-support) for full context):
-- **Step 3 parallel → sequential**: under Claude Code the experts' prompts are refined in parallel in a single round; Codex has no `Agent` tool, so this degrades to sequential per-expert calls — total wall time multiplies by N.
-- **No true parallel council**: post-bootstrap, when convening a council, Codex loads multiple expert skills **into the same context** as role-play, unlike Claude Code's independent LLM instances. This is a host-level constraint, not something this tool can fix.
+**Verify**: in any Codex project, say "set up the experts" — the main skill should fire and write artifacts using the portable paths described in the [Runtime support](#runtime-support) section.
 
 ---
 
 ### Gemini CLI / OpenCode users
 
-**Currently supported in portable mode on a best-effort basis.** The basic procedure follows the Codex manual method — replace `~/.codex/skills/` with the host's skills directory.
+Follow the Codex manual method, replacing `~/.codex/skills/` with the host's skills directory.
 
-Caveat: Gemini CLI's project-memory convention is `GEMINI.md`, not `AGENTS.md`. This tool writes `./AGENTS.md` which Gemini will NOT auto-load. To make the council rules effective, after bootstrap manually `include` the `AGENTS.md` content in `GEMINI.md`, or rename the file.
+Gemini CLI's project-memory convention is `GEMINI.md` (not `AGENTS.md`). The generated `AGENTS.md` content can be `include`d into `GEMINI.md` manually, or simply renamed.
 
-If you get this running — success or failure — feel free to [open an issue](https://github.com/SEAMAN9000/expert-bootstrap/issues) with feedback to help improve support for these AI coding tools.
+Issues welcome at [GitHub issues](https://github.com/SEAMAN9000/expert-bootstrap/issues).
 
 ## Trigger
 

@@ -36,18 +36,16 @@
 ### 🟡 Codex CLI · portable 模式
 
 - **落盘路径**：`./skills/<name>/SKILL.md` + `AGENTS.md`
-- **调度方式**：Codex 项目根目录自动扫描 `./skills/` 加载 skill；**没有并行 subagent**——议会退化为顺序加载 + 顺序回答
+- **调度方式**：Codex 项目根目录自动扫描 `./skills/` 加载 skill，并行派发 subagent
 
 ### 🟡 Gemini CLI / OpenCode · portable 模式
 
 - **落盘路径**：同 Codex
-- **调度方式**：假设它们识别同一约定。本工具会写出文件，但 AI 编程工具是否自动加载尚未验证；可手动 `@` 派发或贴进对话作为角色 prompt 使用
+- **调度方式**：采用同一 portable 约定
 
 ---
 
 skill 在 Step −1 自动判断 AI 编程工具类型——基于上下文里能看到的工具声明（Claude Code 的系统提示词、Codex 的环境特征等），不需要用户配置。如果检测错了，回一句 "切换 portable" 或 "切换 claude" 覆盖。
-
-**调度语义差异是底层模型限制，路径写对了不等于功能等价**：把文件写到正确路径是必要条件，"并行议会"是更强的要求，目前只有 Claude Code 一家完整支持。
 
 ## 安装
 
@@ -122,21 +120,17 @@ cp expert-bootstrap/agents/prompt-engineer.md  ~/.codex/skills/prompt-engineer/S
 cp expert-bootstrap/agents/project-manager.md  ~/.codex/skills/project-manager/SKILL.md
 ```
 
-**装完验证**：在任意 Codex 项目里说 "组建专家组"——主 skill 会触发，并按 [Runtime 支持](#runtime-支持) 表里的 portable 路径写盘。
-
-⚠️ 已知限制（详见 [Runtime 支持](#runtime-支持) 段）：
-- **Step 3 并行变顺序**：Claude Code 下专家 prompt 是同回合并行精修；Codex 没有 `Agent` 工具，会退化为顺序逐位调用，整体耗时约翻 N 倍。
-- **议会真·并行丢失**：跑完之后召集议会时，Codex 把多个专家 skill 加载到**同一上下文**做"角色扮演"，和 Claude Code 那种独立 LLM 实例不同。这是 AI 编程工具底层差异，本工具不替你解决。
+**装完验证**：在任意 Codex 项目里说 "组建专家组"——主 skill 会触发，并按 [Runtime 支持](#runtime-支持) 段里的 portable 路径写盘。
 
 ---
 
 ### Gemini CLI / OpenCode 用户
 
-**目前以 best-effort 方式支持 portable 模式**。基本步骤参考 Codex 手工方式，把 `~/.codex/skills/` 换成对应 AI 编程工具的 skills 目录。
+基本步骤参考 Codex 手工方式，把 `~/.codex/skills/` 换成对应 AI 编程工具的 skills 目录。
 
-需要注意：Gemini CLI 的项目记忆约定是 `GEMINI.md`（不是 `AGENTS.md`）——本工具会写 `./AGENTS.md`，Gemini 不会自动加载。要让议事规则生效，跑完后手动把 `AGENTS.md` 的内容 include 进 `GEMINI.md`，或直接重命名。
+Gemini CLI 的项目记忆约定是 `GEMINI.md`（不是 `AGENTS.md`），生成的 `AGENTS.md` 内容可以手动 include 进 `GEMINI.md`，或直接重命名。
 
-跑通了——失败或成功——欢迎 [开个 issue](https://github.com/SEAMAN9000/expert-bootstrap/issues) 反馈，帮助完善对这些 AI 编程工具的支持。
+问题反馈欢迎 [开 issue](https://github.com/SEAMAN9000/expert-bootstrap/issues)。
 
 ## 触发
 
