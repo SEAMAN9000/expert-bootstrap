@@ -1,7 +1,7 @@
 ---
-description: Bootstrap an expert council for the current project — detects host runtime, discovers the goal interactively (one step only), then autonomously designs the roster, optimizes each expert's prompt, and writes the council to ./.claude/agents/+CLAUDE.md (Claude mode) or ./agents/+AGENTS.md (portable mode). Ends with a seeded first-meeting prompt.
+description: 为当前项目搭建专家组——先检测 AI 编程工具，然后交互式抓取项目目标（仅此一步交互），随后自动设计专家名册、优化每位专家的 prompt，并把专家组落盘到 ./.claude/agents/ + CLAUDE.md（Claude 模式）或 ./agents/ + AGENTS.md（portable 模式）。终态附赠一句可粘贴的首次议会题。
 ---
 
-Invoke the `expert-bootstrap` skill now. Follow it exactly: detect the runtime mode first, do not skip Step 0 (goal discovery), do not insert confirmation prompts in Steps 1–4 beyond the `NEED CLARIFICATION:` escape, and stop after Step 5's readiness announcement.
+立即调用 `expert-bootstrap` skill。严格按其流程执行：先检测运行时模式，不要跳过 Step 0（目标发现），Step 1–4 中除了 `NEED CLARIFICATION:` 这一逃生口外不要插入任何确认提问，Step 5 的就位公告之后必须停下。
 
-User context for this run (if any): $ARGUMENTS
+本次运行的用户上下文（如有）: $ARGUMENTS

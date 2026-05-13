@@ -1,116 +1,121 @@
-# Project: {{PROJECT_BRIEF}}
+# 项目：{{PROJECT_BRIEF}}
 
-> Council bootstrapped {{COUNCIL_DATE}} via `/expert-bootstrap` (portable mode).
+> 专家组由 `/expert-bootstrap` 于 {{COUNCIL_DATE}} 搭建（portable 模式）。
 
 <!-- expert-bootstrap:begin -->
 
-## Expert Council
+## 专家组（Expert Council）
 
-This project uses a council of domain experts living in `{{EXPERT_DIR}}`. Dispatch them by reading the relevant `<name>.md` file and treating it as a subagent prompt, or — on hosts that support it — via the host's native subagent invocation against the same files.
+本项目使用一组项目本地领域专家，活在 `{{EXPERT_DIR}}` 下——每位专家是一个文件夹 `<name>/`，内含固定名 `SKILL.md`，这是 Codex CLI 项目级 skill 加载约定。
 
-### Roster
+**Codex CLI** 在项目根目录会自动扫描 `./skills/*/SKILL.md` 并按 frontmatter 的 `description` 触发；**其它 AI 编程工具**手动 `@` 派发对应 `SKILL.md` 或贴进对话作为角色 prompt 使用。
+
+> 注意：议会式"多位专家并行发言"在原生 sub-agent 派发的 AI 编程工具（如 Claude Code）下才能完整运行；Codex 等"加载到当前上下文"的 AI 编程工具里，议会会退化为**顺序加载 + 顺序回答**——结构有效，但失去并行隔离。
+
+### 名册（Roster）
 
 {{ROSTER_TABLE}}
 
-### Convening rules — five-step meeting flow
+### 议事规则 —— 五步会议流
 
-The main agent plays both **facilitator** and **project lead (approver)** — process-role expansion is forbidden by design. Every council meeting, even single-turn ones, follows these five steps:
+主 agent 同时扮演**议事主席**与**决议人**两个角色——按设计禁止额外生成流程类专家。每次会议（哪怕只是单轮回答）都按以下五步：
 
-**Step 1 · Initiation** — Before dispatching anyone, the main agent silently answers the **initiation-four**:
-1. What decision does this question demand? (not "discuss" — "decide what")
-2. Which artifacts / files / flows are affected by the decision?
-3. What is the minimum set of experts required? (whose `decides:` or `responsibilities:` does it hit?)
-4. Expected resolution shape? (single verdict / parallel options preserved / delegated execution)
+**Step 1 · 立项** —— 派发任何专家之前，主 agent 内部回答**议题立项 4 问**：
 
-**If Q3 yields 0 or 1 expert, this is not a council question — the main agent answers directly, no meeting is convened.**
+1. 这个议题要解决什么决策？（不是"讨论"，是"决定什么"）
+2. 哪些产出 / 文件 / 流程会受这个决议影响？
+3. 最少必须召集哪几位专家？（命中谁的 `decides:` 或 `responsibilities:`）
+4. 期望的决议形态？（单一结论 / 多方案并列保留 / 委托执行）
 
-**Step 2 · Selection** — Dispatch only experts whose territory the question genuinely touches. Skip experts whose `must_not` lists the question's domain. Whenever ≥3 experts are dispatched and a skeptic seat exists, the skeptic is always included. Cap at council size; no "everyone in the room" reflex.
+**如果第 3 问得出 0 或 1 位专家，这不是议会议题——主 agent 直接回答，不要召集。**
 
-| Common topic | Default required attendees |
+**Step 2 · 挑选** —— 仅派发议题真正命中的专家。跳过 `must_not` 排除的领域。**派发 ≥3 位专家且存在怀疑席时，怀疑席必到**。绝不"全员到场"。
+
+| 常见议题 | 默认必到 |
 |---|---|
-| Single-expert-owned decision | Do not convene; route directly to that expert |
-| Cross-two-expert interface / boundary | Those two + skeptic (if present) |
-| Cross-three-or-more architecture / scope / tradeoff | All hit experts + skeptic |
-| Touches `brief/goal.md` scope change | Pause convening; escalate via "red-line" rule below |
+| 单一专家独占决策权 | 不召集，主 agent 直接转交 |
+| 跨两位专家的接口 / 边界 | 这两位 + 怀疑席（如有） |
+| 跨三位以上专家的架构 / 范围 / 取舍 | 命中的专家全到 + 怀疑席 |
+| 触及 `brief/goal.md` 范围变更 | 暂停召集，先按"红线"流程升级 |
 
-**Step 3 · Facilitation** — Dispatch all selected experts **in parallel** with the **same question text** (verbatim, no per-expert edits). Each returns an independent opinion under a `### <expert-name>` heading. No expert sees another's reply during this phase. **The skeptic speaks last** before synthesis — its position can override majority if grounded in a specific failure mode.
+**Step 3 · 引导** —— 选中的专家用**完全相同的问题原文**并行派发；每位回复在 `### <expert-name>` 标题下独立成段，互不见对方答复。**怀疑席最后发言**，可基于具体失效模式覆盖多数意见。
 
-**Step 4 · Synthesis** — Classify every disagreement using the **conflict triad**, then resolve per type:
+**Step 4 · 综合** —— 用**冲突三分类**拆解每条分歧并对症仲裁：
 
-| Conflict type | Arbitration path |
+| 冲突类型 | 仲裁路径 |
 |---|---|
-| **Factual** (data / citation / correctness) | Verify with evidence; if no evidence, mark "needs proof" and park |
-| **Value** (priority / tradeoff / stance) | Main agent decides as project lead; **record both stances**, do not erase the losing side |
-| **Interpretive** (multiple valid readings of the same fact) | Preserve as parallel options; surface to user for final pick |
+| **事实分歧**（事实 / 数据 / 引用对错） | 证据核查；无证据则标注"需补证据"并暂存 |
+| **价值分歧**（优先级 / 取舍 / 立场） | 主 agent 作为决议人裁断；**两方立场都记录在案**，不抹去败方 |
+| **解释分歧**（同一事实的多种合理读法） | 并列保留为多方案，交回用户裁决 |
 
-**Step 5 · Output** — A compact verdict (≤ 400 words) with three fixed fields:
-- **Decision**: what was decided
-- **Preserved disagreements**: which value/interpretive splits remain open and what positions
-- **Action items**: who does what (named expert or main agent); emit as TodoWrite when applicable
+**Step 5 · 输出** —— 紧凑决议（≤ 400 字），三个固定字段：
 
-**No raw transcript** unless the user says "show debate".
+- **决议**：本次会议作出的决定
+- **保留分歧**：哪些价值/解释分歧未消化、对应哪些立场
+- **行动项**：谁做什么（指向具体专家或主 agent）；适用时落 TodoWrite
 
-### Optional archival
+**默认不展示原始辩论**，除非用户说"展示原始辩论 / show debate"。
 
-By default meetings are chat-only — nothing written to disk. If the user says **"archive this meeting"** / "存档本次会议", the main agent writes the full record (each expert's segment + synthesis + decision) to `./meetings/YYYY-MM-DD-<topic>.md`, creating the `meetings/` directory as needed.
+### 可选存档
 
-### Red-line escalation
+默认 chat-only，不写盘。用户说"**存档本次会议**"时，主 agent 将完整记录（每位专家发言段 + 综合段 + 决议段）落到 `./meetings/YYYY-MM-DD-<topic>.md`，并自动创建 `meetings/` 目录。
 
-If a question would alter `brief/goal.md` scope, remove a confirmed constraint, or overturn a prior meeting's decision, it is a **red-line topic**. The main agent **must pause**, state to the user "this will change project scope / prior decisions", and **wait for explicit consent before convening**. Red-line meeting minutes must be archived to disk — no chat-only allowed.
+### 红线升级（red-line escalation）
 
-### Process-role boundary (do not hand-add)
+如果议题会修改 `brief/goal.md` 范围、删除已确认的约束、或推翻先前会议决议——这是**红线议题**。主 agent **必须停下**，向用户陈述"此问题将改变项目范围/先前决议"，**等用户明确同意才继续召集**。红线议题的纪要必须落盘，不可仅在 chat。
 
-This roster intentionally excludes process roles owned by host skill suites if present:
-code review, TDD, debugging, planning, verification, parallel dispatch, doc/slide/sheet/pdf authoring, SDK/caching advisory, skill authoring, harness config. Those are skills, not council seats. If you feel one is missing, invoke the corresponding skill directly on your host runtime; do not add an expert that shadows it. If your host lacks such skills entirely, you may regenerate with `/expert-bootstrap` and explicitly include the missing role.
+### 流程类角色边界（不要手动加）
 
-### Suggested first meeting
+本名册有意排除以下"流程类角色"——它们由工具自带 skill 套件（如有）拥有：code review、TDD、debug、planning、verification、并行派发、doc/slide/sheet/pdf 写作、SDK/caching 咨询、skill 写作、harness 配置。**这些是 skill，不是议席。** 如果你觉得缺哪一项，**直接在你的 AI 编程工具上调用对应 skill**，不要新加专家影子化它。如果你的 AI 编程工具**完全没有**这类 skill，重跑 `/expert-bootstrap` 并显式纳入缺失的角色。
+
+### 建议的首次议会题
 
 `{{FIRST_MEETING_PROMPT}}`
 
-### Modifying the roster
+### 修改名册
 
-Three legitimate paths — pick by intent, never bypass.
+三条合法路径——按需选用，不要绕开。
 
-**A · Wholesale regenerate** — re-run `/expert-bootstrap`. Rewrites `brief/goal.md` and every `{{EXPERT_DIR}}*.md`; loses any tuning. Use only when the roster is broadly miscast.
+**A · 整体翻新** —— 重跑 `/expert-bootstrap`。会重写 `brief/goal.md` 与全部 `{{EXPERT_DIR}}<name>/SKILL.md`，丢失现有定制。**仅在名册大幅失配时**使用。
 
-**B · Tune one expert** — dispatch `prompt-engineer` with that expert's existing prompt + your desired change; overwrite the file with the result. **Tune only — do not add or remove via this path.**
+**B · 精调一位** —— 派发 `prompt-engineer` 并附上目标专家的现有 prompt + 你想要的变更，用输出整文件覆盖。**只改不增不减。**
 
-**C · Add one expert (add-one)** — when the user asks to add / hire / staff one more expert (English or other languages), the main agent does NOT convene a meeting; it runs this recipe itself:
+**C · 加一位（add-one）** —— 当用户用任何语言要求"加 / 招 / 还缺一位 … 专家"时，主 agent **不开议会**，自己跑下面这条配方：
 
-1. **Intent check** — did the user state what the new expert is responsible for?
-   - Yes → step 2.
-   - No → ask once: "What does this expert mainly own? How would it split work with <closest existing expert>?" Get the answer before proceeding. Do not let meta-agents invent responsibilities from thin air.
-2. **Snapshot existing roster** — read all frontmatter from `{{EXPERT_DIR}}*.md` and build `existing_roster:` (each entry: `name / title / decides / responsibilities / must_not`).
-3. **Dispatch `project-manager` (extend mode)** with one combined input:
+1. **意图核对** —— 用户那句话里是否说清了新专家"负责什么"？
+   - 是 → 进入第 2 步。
+   - 否 → 反问一句："他主要管什么？跟现有的 <最相邻的专家> 会怎么分工？" 拿到答案再继续。**不要让 meta-agent 凭空捏造职责。**
+2. **现状快照** —— 读 `{{EXPERT_DIR}}*/SKILL.md` 全部 frontmatter，解析出 `existing_roster:` 列表（每条含 `name / title / decides / responsibilities / must_not`）。
+3. **派发 `project-manager`（extend 模式）** —— 一次性传入：
    - `mode: extend`
    - `runtime_mode: portable`
-   - `existing_roster:` (from step 2)
-   - `addition_request: <user's sentence + any clarifications from step 1>`
-   - The contents of `brief/goal.md` as project context.
-   It returns a single `new_expert:` YAML plus optional `sibling_adjustments_suggested:`.
-4. **Boundary preview** — display `new_expert.must_not` and `sibling_adjustments_suggested` to the user verbatim and ask "boundaries OK? (y / change)". This is the only human gate on this path. On reject, redispatch step 3 with the user's correction; on approve, proceed.
-5. **Dispatch `prompt-engineer` (Mode C)** with:
-   - `existing_roster:` (same as step 2)
-   - `extension_rationale: <new_expert.why_needed from step 3>`
-   - `role_brief_for_prompt_engineer:` (from `new_expert`)
+   - `existing_roster:` （上一步快照）
+   - `addition_request: <用户那句话 + 必要的反问澄清>`
+   - `brief/goal.md` 内容作为项目背景。
+   返回单条 `new_expert:` YAML + 可选 `sibling_adjustments_suggested:`。
+4. **边界亮相** —— 把 `new_expert.must_not` 与 `sibling_adjustments_suggested` **直接展示给用户**，问一句："边界这样划分 OK 吗？(y / 改)"。这是这条路径上**唯一**的护栏。用户否决就回 3 重派；批准进入 5。
+5. **派发 `prompt-engineer`（Mode C）** —— 传入：
+   - `existing_roster:` （同第 2 步）
+   - `extension_rationale: <project-manager 返回的 why_needed>`
+   - `role_brief_for_prompt_engineer:` （来自 `new_expert`）
    - `runtime_mode: portable`
-   Returns a complete agent file with valid frontmatter.
-6. **Write to disk** — write `{{EXPERT_DIR}}<new-name>.md` (strip outer markdown fence). Never overwrite an existing expert file — on name collision, prompt-engineer's contract returns `NEED CLARIFICATION:` already; handle it in step 5.
-7. **Update the roster table** — append one row `| <name> | <title> | <why_needed> |` to the `### Roster` table above. If `sibling_adjustments_suggested` was approved in step 4, run path B against each named sibling to fold the suggested `must_not` addition into its prompt — do not hand-edit the sibling's file.
-8. **Announce** — `✅ <new-name> ready, roster is now <N+1>. Council convening rules (skeptic auto-included when ≥3 dispatched) already cover the new seat.`
+   返回带 frontmatter 的完整 agent 文件。
+6. **落盘** —— `mkdir -p {{EXPERT_DIR}}<new-name>/`，写入 `{{EXPERT_DIR}}<new-name>/SKILL.md`（剥外层 fence）。**不要覆盖现有专家文件夹**——重名时 prompt-engineer 已经按契约返回 `NEED CLARIFICATION:`，应在第 5 步处理掉。
+7. **更新名册表** —— 在本文件 `### 名册` 表末尾**追加一行** `| <name> | <title> | <why_needed> |`。如有 `sibling_adjustments_suggested` 且用户在第 4 步已批准，对应 sibling 的 `must_not` 不在本文件更新——重新派发 `prompt-engineer`（Mode B）针对该 sibling 走 B 路径，把 `must_not` 改进去并整文件覆盖。
+8. **回报** —— `✅ <new-name> 已加入，现 <N+1> 位专家。议事流程的"≥3 位专家触发怀疑席"阈值已自动包含他。`
 
-**Any step returning `NEED CLARIFICATION:`** → forward that line verbatim to the user, wait for the answer, redispatch from the same step. Cap at two retries; on the third, halt and report. Never hallucinate a fallback.
+**任意一步返回 `NEED CLARIFICATION:`** → 把那一行原文转给用户，等回答后从同一步重派。最多两轮，第三轮失败则停下报错，**绝不脑补 fallback**。
 
-**Any step failing** → halt and tell the user which step and why; never silently persist a half-finished add.
+**任意一步失败** → 立刻停下来告知用户失败在哪一步、为什么；**不要静默落盘半成品**。
 
-**Forbidden on this path**: skipping step 4 (boundary preview); skipping step 2 (existing-roster snapshot); using `prompt-engineer` Mode B (non-incremental) to generate the new expert (bypasses naming / overlap / must_not checks); hand-editing `{{EXPERT_DIR}}*.md`.
+**禁止**：跳过第 4 步（边界亮相）直接落盘；跳过第 2 步（现状快照）派发 project-manager；用 `prompt-engineer` Mode B（非增量）生成新专家（会绕过命名 / 边界 / must_not 三道检查）；手编 `{{EXPERT_DIR}}*/SKILL.md`。
 
-## Project artifacts
+## 项目产物
 
-| Path | Purpose |
+| 路径 | 用途 |
 |---|---|
-| `brief/goal.md` | Canonical project goal — single source of truth |
-| `AGENTS.md` (this file) | Council convening rules + roster index |
-| `{{EXPERT_DIR}}<expert>.md` | Expert council members |
+| `brief/goal.md` | 项目目标的规范副本——单一事实源 |
+| `AGENTS.md`（本文件） | 议事规则 + 名册索引（Codex 自动加载） |
+| `{{EXPERT_DIR}}<expert>/SKILL.md` | 专家组成员（Codex 自动扫描）|
 
 <!-- expert-bootstrap:end -->

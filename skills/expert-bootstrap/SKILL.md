@@ -1,139 +1,152 @@
 ---
 name: expert-bootstrap
-description: Use ONLY when the user explicitly asks to set up an expert council / expert team / expert committee for a project. Detects the host runtime (Claude Code vs. portable), discovers the project goal once interactively, then autonomously refines the goal, designs an expert roster via project-manager, refines each expert's system prompt via prompt-engineer, writes them to the runtime-appropriate location (`./.claude/agents/` + `CLAUDE.md` on Claude Code, `./agents/` + `AGENTS.md` elsewhere), and announces readiness with a seeded first-meeting prompt. Canonical triggers (any of these, exact): `/expert-bootstrap`, "set up the experts", "convene the expert council", "组建专家组", "搭建专家组", "初始化专家组", "召集专家组", "成立专家委员会". Generic project-start phrases ("启动项目", "新项目", "start a new project") do NOT trigger this — they fall through to superpowers:brainstorming when present.
+description: 仅当用户明确要求为某项目搭建专家组 / 专家委员会 / 专家团时调用。会先检测 AI 编程工具（Claude Code 还是 portable），一次性交互式抓取项目目标，然后自动精炼目标、通过 project-manager 设计专家名册、通过 prompt-engineer 精修每位专家的 system prompt，并按运行时把产物写到对应位置（Claude Code 上是 `./.claude/agents/<name>.md` + `CLAUDE.md`，其他 AI 编程工具用 Codex 验证过的 `./skills/<name>/SKILL.md` + `AGENTS.md`），最后给出可粘贴的首次议会题。规范触发短语（须精确匹配，任一即可，中英文均可）：`/expert-bootstrap`、"组建专家组"、"搭建专家组"、"初始化专家组"、"召集专家组"、"成立专家委员会"、"set up the experts"、"build the expert council"、"initialize the expert council"、"convene the expert council"、"form the expert committee"。泛义的"启动项目 / 新项目 / start a new project / let's spin up a team"等近义表达**不**触发本 skill——它们会落到 `superpowers:brainstorming`（如装了）。
 ---
 
-# Council Bootstrap
+# 专家组搭建（Council Bootstrap）
 
-You orchestrate a single autonomous run that turns a confirmed project goal into a ready-to-use expert council. The two meta-agents `prompt-engineer` and `project-manager` are dispatched by you. Your job is to compose them, write outputs to disk, announce readiness, and stop.
+你负责把一个已确认的项目目标，自动转化为一组随时可用的专家组。两个 meta-agent `prompt-engineer` 与 `project-manager` 由你派发。你的职责是：编排它们、把产物写盘、宣告就位、停下。
 
-## Preconditions
+## 前置条件
 
-- Current working directory is the project root. If ambiguous, ask once.
-- The `prompt-engineer` and `project-manager` agents are available either as native subagents (`Agent(subagent_type="…")`) or as inline-prompt fallbacks if the host lacks subagent dispatch.
-- Create needed directories on demand. Do not pre-create anything until Step 4.
+- 当前工作目录是项目根。如果存在歧义，问一次。
+- `prompt-engineer` 与 `project-manager` 必须可用——要么作为原生 subagent（`Agent(subagent_type="…")`），要么以 inline-prompt 形式回退（ AI 编程工具无 subagent 派发能力时）。
+- 目录按需创建。**Step 4 之前不要预创建任何东西。**
 
 ---
 
-## Step −1 — Runtime detection (silent, before Step 0)
+## Step −1 · 运行时检测（静默，Step 0 之前）
 
-Decide the deploy mode **once** and remember for the run. Apply signals in this priority order — first match wins:
+整次运行**只决定一次**部署模式并记住。按优先级匹配，**首条命中即停**：
 
-1. **Filesystem signal (strongest)** — does `./.claude/` exist in the project root, OR does `~/.claude/` exist in the user home? If yes → `claude` mode. Use `Glob` or equivalent to check.
-2. **Tool-availability signal** — is there an `Agent` tool exposed that accepts `subagent_type` as a parameter, AND is `subagent_type="prompt-engineer"` invokable (i.e., the meta-agent is registered as a native subagent)? If yes → `claude` mode.
-3. **Conversation signal** — has the user explicitly named their host runtime in this session (e.g., "I'm on Codex CLI")? Honor it.
-4. **Default** — `portable` mode. It works everywhere; Claude Code can still read `AGENTS.md` as a secondary signal even if `CLAUDE.md` is its native one, and an expert directory at `./agents/` is loadable by every host examined.
+1. **文件系统信号（最强）** —— `./.claude/` 是否存在于项目根，或 `~/.claude/` 是否存在于用户主目录？任一为是 → `claude` 模式。用 `Glob` 或等价能力检查。
+2. **工具可用性信号** —— 当前是否存在 `Agent` 工具，且接受 `subagent_type` 参数，**且** `subagent_type="prompt-engineer"` 可调用（即 meta-agent 已注册为原生 subagent）？是 → `claude` 模式。
+3. **对话信号** —— 用户在本次会话里是否显式说出 AI 编程工具名（例如 "我在 Codex CLI"）？尊重它。
+4. **缺省** —— `portable` 模式。采用 Codex CLI 验证过的项目级加载约定（`./AGENTS.md` + `./skills/<name>/SKILL.md`），这也是 agentskills.io 收敛的方向；Gemini CLI、OpenCode 等同类 AI 编程工具对这套约定的支持度未独立验证，但路径形态最有命中机会。
 
-| Mode | Expert dir | Manifest file |
-|---|---|---|
-| `claude` | `./.claude/agents/` | `./CLAUDE.md` |
-| `portable` | `./agents/` | `./AGENTS.md` |
+| 模式 | 专家文件 | manifest 文件 | 文件结构 |
+|---|---|---|---|
+| `claude` | `./.claude/agents/<name>.md` | `./CLAUDE.md` | 扁平：每位专家一个 .md |
+| `portable` | `./skills/<name>/SKILL.md` | `./AGENTS.md` | 嵌套：每位专家一个文件夹，内固定名 `SKILL.md` |
 
-Announce the detected mode in **one short line** before Step 0 so the user can correct it:
+Step 0 之前用**单行**宣告检测结果，便于用户纠错：
 `检测到 <mode> 模式，专家将写入 <expert_dir>。如需切换回复 "切换 portable" 或 "切换 claude"。`
 
-The detected mode (`claude` or `portable`) is the **runtime_mode** value passed to project-manager and prompt-engineer in Steps 2–3. Remember it for the entire run.
+> 调度语义提醒（仅 portable 模式相关）：Codex/Gemini 等 AI 编程工具的 skill 机制是"加载到当前上下文照做"，**不是** Claude Code 的"并行派发独立子 LLM"。议会式"多位专家同时发言"在 portable 模式下会退化为**顺序加载 + 顺序回答**——文件依然有效，但失去并行隔离。本 skill 不为此发出错误，由用户接受。
+
+检测到的模式（`claude` 或 `portable`）就是 Step 2–3 传给 project-manager 和 prompt-engineer 的 **runtime_mode** 值，整次运行牢记。
 
 ---
 
-## Step 0 — Goal discovery (ONLY interactive step)
+## Step 0 · 目标发现（唯一交互步）
 
-Classify the user's starting state:
+按用户的起点状态分三类处理：
 
-**State A — Clear goal already stated.** Restate in one sentence. Ask "确认这是项目目标吗？(y / 改)". On confirm, write to `brief/goal.md`.
+**状态 A · 已说清目标。** 用一句话复述。问"确认这是项目目标吗？(y / 改)"。确认后写入 `brief/goal.md`。
 
-**State B — Has fragments** (notes, files, partial folder). Read what the user points at. Synthesize a draft one-paragraph goal grounded in those materials. Show the draft, list the sources you read. Ask "确认？(y / 改 / 补充)". Apply edits, write to `brief/goal.md`.
+**状态 B · 有片段** （笔记、文件、半成品目录）。读用户指向的内容，基于这些材料起草一段（一个段落）项目目标。展示草稿 + 你读过的源。问"确认？(y / 改 / 补充)"。按用户修改后写入 `brief/goal.md`。
 
-**State C — Nothing beyond "I want to start a project".** Ask **outcome-first**, one at a time, **maximum 3 questions** (stop the moment you have enough):
+**状态 C · 除了"我想做个项目"以外什么都没有。** 用 **outcome-first** 风格提问，**一次一个，最多 3 个**（够了就立刻停）：
 
 1. **30 天后你想看到什么具体结果？**（可观察的结果，不是"能跑"）
-2. **谁会感受到这个结果？**（你自己 / 团队 / 某类用户 — 越具体越好）
+2. **谁会感受到这个结果？**（你自己 / 团队 / 某类用户——越具体越好）
 3. **最硬的约束是什么？**（时间 / 技能空白 / 现有系统）
 
-"不知道"是合法答案——记为 `unknown`，不要逼问。任何一题后若已够起草，立即起草并展示。批准后写入 `brief/goal.md`。
+"不知道"是合法答案——记为 `unknown`，不要逼问。任何一题后只要够起草，立即起草并展示。批准后写入 `brief/goal.md`。
 
-**Step 0 出口契约**：`brief/goal.md` 存在、有用户确认的原始版本。**从此处起进入全自动流水线，不再询问用户**，直到 Step 5 终态提醒。
-
----
-
-## Step 1 — Refine goal (autonomous)
-
-Dispatch `prompt-engineer` (native subagent if available; otherwise inline prompt). Pass the contents of `brief/goal.md` with the explicit instruction: **"output: a refined project goal statement, not an agent system prompt"**.
-
-Overwrite `brief/goal.md` with the refined version. **Do not ask for confirmation.** If the refined version is materially different, mention this in the Step 5 announcement.
+**Step 0 出口契约**：`brief/goal.md` 存在，且持有用户已确认的原始版本。**从此进入全自动流水线，不再询问用户**，直到 Step 5 的终态广播。
 
 ---
 
-## Step 2 — Design roster (autonomous)
+## Step 1 · 精炼目标（自动）
 
-Read `brief/goal.md` fresh. Dispatch `project-manager` passing **two** inputs:
-1. The contents of `brief/goal.md`.
-2. A line stating `runtime_mode: <claude|portable>` (the value detected in Step −1). This activates the correct blacklist tier: in `claude` mode, project-manager applies the full host-skill avoidance table; in `portable` mode, only the cross-platform rows (anthropic-skills / platform-skill rows that may be present) activate by default, and superpowers rows deactivate unless the user has stated otherwise.
+派发 `prompt-engineer`（有原生 subagent 用原生；否则用 inline prompt）。把 `brief/goal.md` 的内容传入，附带显式指令：**"output: a refined project goal statement, not an agent system prompt"**。
 
-It returns a YAML roster of 3–4 experts (or up to 7 if the project genuinely spans disjoint domains).
-
-**Handling `NEED CLARIFICATION:`** — if the YAML body is exactly a `NEED CLARIFICATION: <question>` line, this is the only permitted interaction in the autonomous segment. Surface the question to the user verbatim, wait for the answer, then re-dispatch project-manager with the original inputs PLUS the user's answer appended as `user_clarification: <answer>`. Loop at most twice; if a third clarification is needed, halt the run and report.
-
-If the YAML is valid, proceed silently. Hold it in memory for Step 3 — do not persist as a file.
+用精炼后的版本**覆写** `brief/goal.md`。**不再问用户**。若与原版有显著差异，Step 5 的就位公告里顺带提一下。
 
 ---
 
-## Step 3 — Refine each expert's prompt (autonomous, parallel)
+## Step 2 · 设计名册（自动）
 
-Dispatch `prompt-engineer` **in parallel** — one call per expert in the same response. Pass:
-- The expert's `role_brief_for_prompt_engineer` field
-- The contents of `brief/goal.md` as project context
-- The detected runtime mode (so prompts avoid host-specific assumptions)
+重新读取 `brief/goal.md`。派发 `project-manager`，传入**两项**输入：
 
-Each call returns a fenced markdown block containing the production-ready system prompt with valid frontmatter (`name:` kebab-case, `description:` one sentence).
+1. `brief/goal.md` 的内容。
+2. 一行 `runtime_mode: <claude|portable>`（Step −1 检测出的值）。这会激活对应的黑名单层级：`claude` 模式下 project-manager 应用完整的工具自带 skill 避让表；`portable` 模式下仅跨平台行（anthropic-skills / 平台 skill 行）默认激活，superpowers 行**不**默认激活（除非用户明示有）。
 
-If any single dispatch fails or returns malformed output, retry once with a clarifying note. If it fails twice, **halt the run** and report exactly which expert failed — do not silently ship a partial council.
+它会返回一个 YAML 名册，3–4 位专家（仅当项目确实跨多个不相交领域时才到 7）。
+
+**处理 `NEED CLARIFICATION:`** —— 若返回体正好是一行 `NEED CLARIFICATION: <问题>`，这是自动段里**唯一**允许的交互。把问题原文转给用户，等回答后用原输入 + 追加一行 `user_clarification: <答案>` 重新派发 project-manager。最多两轮；若第三轮还要追问，**停下并报告**。
+
+若 YAML 合法，静默继续。**在内存中**持有它给 Step 3 用——**不要写成文件**。
 
 ---
 
-## Step 4 — Write to disk (autonomous)
+## Step 3 · 精修每位专家的 prompt（自动，并行）
 
-For each expert, write to `<expert_dir>/<name>.md` (mode-appropriate path from Step −1). Strip the prompt-engineer's outer markdown fence.
+**并行**派发 `prompt-engineer`——同一回合内每位专家一次调用。每次传入：
 
-The body each expert file must start with valid frontmatter:
+- 该专家的 `role_brief_for_prompt_engineer` 字段
+- `brief/goal.md` 的内容作为项目背景
+- Step −1 检测出的运行时模式（确保 prompt 不依赖 AI 编程工具特定假设）
+
+每次返回一个带围栏（fenced）的 markdown 块，内容是带合法 frontmatter（`name:` kebab-case、`description:` 一句话）的生产就绪 system prompt。
+
+任一调用失败或返回畸形，**附带澄清说明重试一次**。若仍失败，**整体停下并报告**究竟哪位专家失败——绝不静默吐出残缺名册。
+
+---
+
+## Step 4 · 写盘（自动）
+
+每位专家的目标路径**取决于 Step −1 的模式**：
+
+- **claude 模式** —— 写入 `./.claude/agents/<name>.md`（扁平：单文件直接落在 agents 目录下）。
+- **portable 模式** —— 先 `mkdir -p ./skills/<name>/`，再写入 `./skills/<name>/SKILL.md`（嵌套：每位专家一个文件夹，内含固定名 `SKILL.md`——这是 Codex CLI 验证过的项目级 skill 加载约定）。
+
+**剥掉** prompt-engineer 外层的 markdown 围栏。
+
+每个专家文件的正文必须以合法 frontmatter 开头：
+
 ```
 ---
-name: <kebab-case name>
-description: <one-sentence trigger>
+name: <kebab-case 名字>
+description: <一句话触发场景>
 ---
 
-<refined system prompt body>
+<精修后的 system prompt 正文>
 ```
 
-Then write the manifest file:
-- **claude mode** → `./CLAUDE.md` filled from `templates/CLAUDE.md.tpl`
-- **portable mode** → `./AGENTS.md` filled from `templates/AGENTS.md.tpl`
+接着写 manifest 文件：
 
-Substitutions:
-- `{{PROJECT_BRIEF}}` → first line of `brief/goal.md`
-- `{{ROSTER_TABLE}}` → markdown table of `name | title | why_needed`
-- `{{COUNCIL_DATE}}` → today's date (YYYY-MM-DD)
-- `{{EXPERT_DIR}}` → `./.claude/agents/` or `./agents/`
-- `{{FIRST_MEETING_PROMPT}}` → see Step 5 — same string is also surfaced in the announcement
+- **claude 模式** → `./CLAUDE.md`，从 `templates/CLAUDE.md.tpl` 填充
+- **portable 模式** → `./AGENTS.md`，从 `templates/AGENTS.md.tpl` 填充
 
-If the manifest file already exists, do NOT overwrite. Replace only the section between `<!-- expert-bootstrap:begin -->` and `<!-- expert-bootstrap:end -->` sentinels. If sentinels are absent, append the section once with sentinels wrapping it.
+替换 token：
 
-If a roster shrink leaves orphan `<old-name>.md` files in `<expert_dir>/`, list them in the Step 5 announcement as `孤儿（可手动删除）` — do not delete automatically.
+- `{{PROJECT_BRIEF}}` → `brief/goal.md` 的首行
+- `{{ROSTER_TABLE}}` → 一个 `name | title | why_needed` 的 markdown 表
+- `{{COUNCIL_DATE}}` → 今日日期（YYYY-MM-DD）
+- `{{EXPERT_DIR}}` → claude 模式 `./.claude/agents/`；portable 模式 `./skills/`
+- `{{EXPERT_FILE_PATTERN}}` → claude 模式 `<expert_dir><name>.md`；portable 模式 `<expert_dir><name>/SKILL.md`
+- `{{FIRST_MEETING_PROMPT}}` → 见 Step 5——这同一行也会在就位公告里出现
+
+若 manifest 文件**已存在**，**不要覆写**。仅替换 `<!-- expert-bootstrap:begin -->` 与 `<!-- expert-bootstrap:end -->` 这两行哨兵之间的内容。若哨兵不存在，**追加**一次（连同哨兵一起包裹）。
+
+若名册缩水后残留旧专家产物（claude 模式：孤立的 `<old-name>.md`；portable 模式：孤立的 `<old-name>/` 文件夹），**Step 5 公告里列为"孤儿（可手动删除）"**——不要自动删。
 
 ---
 
-## Step 5 — Announce readiness (templated)
+## Step 5 · 宣告就位（模板化）
 
-Output exactly this format, then stop. **Do not propose implementation steps. Do not start using the experts yourself.** The bootstrap is the deliverable.
+**严格按下列格式输出，然后停下。不要建议实施步骤。不要自己开始用专家。**搭建完成本身就是交付物。
 
 ```
 🎓 专家组已就位，<N> 席待命
 
-  goal:    <one line from brief/goal.md>
+  goal:    <brief/goal.md 第一行>
   mode:    <claude | portable>
   experts: <expert_dir>
-           - <name1>  (<one-liner title>)
-           - <name2>  (<one-liner title>)
+           - <name1>  (<一句话 title>)
+           - <name2>  (<一句话 title>)
            - ...
   manifest: <CLAUDE.md | AGENTS.md>
 
@@ -149,19 +162,16 @@ Output exactly this format, then stop. **Do not propose implementation steps. Do
 需要别的专家组？  /expert-bootstrap 重跑可整体翻新。
 ```
 
-**Generating `FIRST_MEETING_PROMPT`**: derive one cross-domain question from `brief/goal.md` + roster. Pick the tension point that most clearly hits ≥2 experts' territories. Phrase as a concrete decision the council can take, not a vague "discuss". One sentence, paste-ready.
-
-Example (this project's own first meeting):
-> 在「跨平台 + 文件系统化简 + 一次成型 UX」三条约束下，专家文件该生成到 `./agents/` 还是 `./.claude/agents/`？AGENTS.md 与 CLAUDE.md 如何并存？把 v2 路线图重新排序。
+**生成 `FIRST_MEETING_PROMPT`** ：从 `brief/goal.md` + 名册中导出一个跨领域问题。选取最能命中 ≥2 位专家领地的张力点，措辞为一个**议会可裁决的具体决策**，不是空泛的"讨论"。**一句话，可直接粘贴**。
 
 ---
 
-## Failure modes to avoid
+## 失败模式（必须规避）
 
-- **Do not skip Step 0 discovery for State B/C.** A thin brief produces a thin roster.
-- **Do not insert user-confirmation prompts in Steps 1–4** beyond Step 2's `NEED CLARIFICATION:` escape hatch. The promise is one-shot autonomy after goal confirmation.
-- **Do not inline expert prompts into your own context.** Always dispatch prompt-engineer.
-- **Do not write experts to `~/.claude/agents/` or `~/.codex/agents/`** (global). Always project-local in the detected mode's path.
-- **Do not hand-edit YAML rosters or refined prompts mid-run.** Re-dispatch the relevant meta-agent.
-- **Do not overwrite an existing manifest file.** Use sentinel-bounded replacement.
-- **Do not persist roster.yaml or state.json.** The run is one-shot; the only durable artifacts are `brief/goal.md`, `<expert_dir>/*.md`, and the manifest file.
+- **不要跳过 Step 0**——状态 B/C 下"省一步"换来的是稀薄的 brief，必然产出稀薄的名册。
+- **Step 1–4 不要插入用户确认 prompt**——除 Step 2 的 `NEED CLARIFICATION:` 逃生口之外的任何"再问一下"都违约。一次确认、一次自治的承诺源头在这里。
+- **不要把专家 prompt 内联进你自己的上下文**——永远派发 prompt-engineer 去写。
+- **不要把专家写到 `~/.claude/agents/` 或 `~/.codex/skills/`**（全局位置）。永远按检测到的模式写到**项目本地**——claude 模式下 `./.claude/agents/`，portable 模式下 `./skills/`。
+- **运行中途不要手动改 YAML 名册或精修后的 prompt**——重新派发对应 meta-agent。
+- **不要覆写既有的 manifest 文件**——用哨兵包裹的替换。
+- **不要持久化 roster.yaml 或 state.json**——本次运行是 one-shot。唯一的耐久产物是：`brief/goal.md`、`<expert_dir>/*.md` 与 manifest 文件。

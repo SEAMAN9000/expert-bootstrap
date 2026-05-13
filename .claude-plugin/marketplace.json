@@ -1,0 +1,29 @@
+{
+  "name": "SEAMAN9000",
+  "owner": {
+    "name": "SEAMAN9000",
+    "url": "https://github.com/SEAMAN9000"
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "description": "expert-bootstrap — a Claude Code skill that generates a project-tailored council of domain experts."
+  },
+  "plugins": [
+    {
+      "name": "expert-bootstrap",
+      "source": "./",
+      "description": "Bootstrap a project-local council of generated domain experts. Two meta-agents (prompt-engineer + project-manager) read your project goal and design a tailored 3–4 expert roster on the fly, written to ./.claude/agents/ on Claude Code or ./skills/<name>/SKILL.md on portable hosts (Codex CLI, etc.). Triggers on: /expert-bootstrap, 组建专家组, set up the experts, build the expert council, convene the expert council, form the expert committee.",
+      "version": "0.2.0",
+      "category": "agents",
+      "keywords": [
+        "expert-council",
+        "subagent",
+        "multi-agent",
+        "project-bootstrap",
+        "skill-generation"
+      ],
+      "homepage": "https://github.com/SEAMAN9000/expert-bootstrap",
+      "license": "MIT"
+    }
+  ]
+}

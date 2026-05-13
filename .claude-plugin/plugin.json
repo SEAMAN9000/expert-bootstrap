@@ -1,6 +1,6 @@
 {
   "name": "expert-bootstrap",
-  "description": "Bootstrap a project-local council of generated domain experts. Cross-platform: two meta-agents (prompt-engineer + project-manager) generate a tailored expert roster per project, written to ./.claude/agents/ on Claude Code or ./agents/ on portable hosts (Codex CLI, Gemini CLI, OpenCode).",
+  "description": "Bootstrap a project-local council of generated domain experts. Cross-platform: two meta-agents (prompt-engineer + project-manager) generate a tailored expert roster per project, written to ./.claude/agents/<name>.md on Claude Code or ./skills/<name>/SKILL.md on portable hosts (Codex CLI verified; Gemini CLI / OpenCode best-effort).",
   "version": "0.2.0",
   "author": {
     "name": "SEAMAN9000"
@@ -23,9 +23,9 @@
   ],
   "x-runtime-compatibility": {
     "claude-code": "supported",
-    "codex-cli": "portable",
-    "gemini-cli": "portable",
-    "opencode": "portable",
-    "notes": "File generation is portable across listed runtimes. Native subagent dispatch is host-specific; portable mode writes paste-ready agent files but invocation syntax depends on the host."
+    "codex-cli": "file-format-portable-dispatch-unverified",
+    "gemini-cli": "file-format-portable-dispatch-unverified",
+    "opencode": "file-format-portable-dispatch-unverified",
+    "notes": "Verified end-to-end only on Claude Code. On other listed runtimes, generated agent files use standard frontmatter (name/description) and are designed to be portable, but the full pipeline (SKILL.md auto-discovery, Agent(subagent_type=...) dispatch, /plugin marketplace install) has not been validated by the maintainers. Reports from those hosts are welcome via GitHub issues."
   }
 }
