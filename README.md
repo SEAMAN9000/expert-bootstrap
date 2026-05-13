@@ -38,7 +38,7 @@
 - **落盘路径**：`./skills/<name>/SKILL.md` + `AGENTS.md`
 - **调度方式**：Codex 项目根目录自动扫描 `./skills/` 加载 skill；**没有并行 subagent**——议会退化为顺序加载 + 顺序回答
 
-### 🟡 Gemini CLI / OpenCode · portable 模式（未独立验证）
+### 🟡 Gemini CLI / OpenCode · portable 模式
 
 - **落盘路径**：同 Codex
 - **调度方式**：假设它们识别同一约定。本工具会写出文件，但 AI 编程工具是否自动加载尚未验证；可手动 `@` 派发或贴进对话作为角色 prompt 使用
@@ -132,11 +132,11 @@ cp expert-bootstrap/agents/project-manager.md  ~/.codex/skills/project-manager/S
 
 ### Gemini CLI / OpenCode 用户
 
-未独立验证，**目前 best-effort 推断 portable 模式可跑**。基本步骤参考 Codex 手工方式，把 `~/.codex/skills/` 换成对应 AI 编程工具的 skills 目录。
+**目前以 best-effort 方式支持 portable 模式**。基本步骤参考 Codex 手工方式，把 `~/.codex/skills/` 换成对应 AI 编程工具的 skills 目录。
 
 需要注意：Gemini CLI 的项目记忆约定是 `GEMINI.md`（不是 `AGENTS.md`）——本工具会写 `./AGENTS.md`，Gemini 不会自动加载。要让议事规则生效，跑完后手动把 `AGENTS.md` 的内容 include 进 `GEMINI.md`，或直接重命名。
 
-跑通了——失败或成功——请 [开个 issue](https://github.com/SEAMAN9000/expert-bootstrap/issues) 告诉我们。这正是把"未独立验证"升级为"已验证"所需要的数据。
+跑通了——失败或成功——欢迎 [开个 issue](https://github.com/SEAMAN9000/expert-bootstrap/issues) 反馈，帮助完善对这些 AI 编程工具的支持。
 
 ## 触发
 

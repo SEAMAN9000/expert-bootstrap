@@ -38,7 +38,7 @@ Starting a new project but stuck on "which feature to build next"? Team split be
 - **Write path**: `./skills/<name>/SKILL.md` + `AGENTS.md`
 - **Dispatch**: Codex auto-scans `./skills/` at the project root by frontmatter `description`; **no parallel sub-agent** — council degrades to sequential load + sequential reply
 
-### 🟡 Gemini CLI / OpenCode · Portable mode (not independently verified)
+### 🟡 Gemini CLI / OpenCode · Portable mode
 
 - **Write path**: Same as Codex
 - **Dispatch**: Assumed to recognize the same convention. The skill writes the files, but host auto-loading is unverified; experts can still be `@`-dispatched manually or pasted in as role prompts
@@ -132,11 +132,11 @@ cp expert-bootstrap/agents/project-manager.md  ~/.codex/skills/project-manager/S
 
 ### Gemini CLI / OpenCode users
 
-Not independently verified. Currently **best-effort assumption that portable mode runs**. The basic procedure follows the Codex manual method — replace `~/.codex/skills/` with the host's skills directory.
+**Currently supported in portable mode on a best-effort basis.** The basic procedure follows the Codex manual method — replace `~/.codex/skills/` with the host's skills directory.
 
 Caveat: Gemini CLI's project-memory convention is `GEMINI.md`, not `AGENTS.md`. This tool writes `./AGENTS.md` which Gemini will NOT auto-load. To make the council rules effective, after bootstrap manually `include` the `AGENTS.md` content in `GEMINI.md`, or rename the file.
 
-If you get this running — success or failure — please [open an issue](https://github.com/SEAMAN9000/expert-bootstrap/issues). That's exactly the data needed to promote "not independently verified" to "verified".
+If you get this running — success or failure — feel free to [open an issue](https://github.com/SEAMAN9000/expert-bootstrap/issues) with feedback to help improve support for these AI coding tools.
 
 ## Trigger
 
