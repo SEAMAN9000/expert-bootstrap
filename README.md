@@ -11,7 +11,7 @@
 ## 适合 / 不适合
 
 ✅ **适合**
-- 在 Claude Code / Codex 等 AI 编程工具上开新项目，想要一组**项目本地、议事用**的领域顾问
+- 在 Claude Code / Codex CLI / OpenCode 上开新项目，想要一组**项目本地、议事用**的领域顾问
 - 项目跨 2+ 互不相邻领域（例如硬件 + 合规 + 前端），需要多方立场仲裁
 - 专家职责会因项目类型变化——"前端"在 SaaS 仪表盘和营销落地页里要操心的事完全不同
 
@@ -28,34 +28,37 @@
 
 ## Runtime 支持
 
-### ✅ Claude Code · 原生支持
+### ✅ Claude Code
 
-- **落盘路径**：`./.claude/agents/<name>.md` + `CLAUDE.md`
-- **调度方式**：主 agent 用 `Agent(subagent_type=...)` **并行**派发独立 LLM 实例 → 议会真·并行
+- **专家路径**：`./.claude/agents/<name>.md`（扁平：单文件）
+- **项目记忆**：`./CLAUDE.md`
+- **调度**：主 agent 用 `Agent(subagent_type=...)` 并行派发独立 LLM 实例
 
-### 🟡 Codex CLI · portable 模式
+### ✅ Codex CLI
 
-- **落盘路径**：`./skills/<name>/SKILL.md` + `AGENTS.md`
-- **调度方式**：Codex 项目根目录自动扫描 `./skills/` 加载 skill，并行派发 subagent
+- **专家路径**：`./skills/<name>/SKILL.md`（嵌套：每位专家一个文件夹）
+- **项目记忆**：`./AGENTS.md`
+- **调度**：Codex 自动扫描项目根 `./skills/`，按 frontmatter `description` 触发并行 subagent
 
-### 🟡 Gemini CLI / OpenCode · portable 模式
+### ✅ OpenCode
 
-- **落盘路径**：同 Codex
-- **调度方式**：采用同一 portable 约定
+- **专家路径**：`./.opencode/skills/<name>/SKILL.md`（嵌套：每位专家一个文件夹）
+- **项目记忆**：`./AGENTS.md`
+- **调度**：OpenCode 自动扫描 `./.opencode/skills/`，按 frontmatter `description` 触发并行 subagent
 
 ---
 
-skill 在 Step −1 自动判断 AI 编程工具类型——基于上下文里能看到的工具声明（Claude Code 的系统提示词、Codex 的环境特征等），不需要用户配置。如果检测错了，回一句 "切换 portable" 或 "切换 claude" 覆盖。
+skill 在 Step −1 自动判断 AI 编程工具类型——基于上下文里能看到的工具声明（系统提示词或环境特征），不需要用户配置。检测错了，回一句 "切换 claude" / "切换 codex" / "切换 opencode" 覆盖。
 
 ## 安装
 
 ### 跨工具通用 · 让 AI 自己读 README 装（推荐）
 
-把下面这段话**整段**复制粘贴给 Claude Code 或 Codex CLI 的对话框：
+把下面这段话**整段**复制粘贴给 Claude Code / Codex CLI / OpenCode 的对话框：
 
 > 帮我安装这个 skill：`https://github.com/SEAMAN9000/expert-bootstrap`
 >
-> 你先识别自己跑在 Claude Code 还是 Codex 上，然后读它 README 里对应的"安装"段落，按手工方式执行。装完后告诉我触发关键词。
+> 你先识别自己跑在 Claude Code、Codex CLI 还是 OpenCode 上，然后读它 README 里对应的"安装"段落，按手工方式执行。装完后告诉我触发关键词。
 
 AI 会自己读 README、跑 `git clone` 和 `cp` 命令落盘，装完告诉你能用了。你不用记任何命令。
 
@@ -120,17 +123,31 @@ cp expert-bootstrap/agents/prompt-engineer.md  ~/.codex/skills/prompt-engineer/S
 cp expert-bootstrap/agents/project-manager.md  ~/.codex/skills/project-manager/SKILL.md
 ```
 
-**装完验证**：在任意 Codex 项目里说 "组建专家组"——主 skill 会触发，并按 [Runtime 支持](#runtime-支持) 段里的 portable 路径写盘。
+**装完验证**：在任意 Codex 项目里说 "组建专家组"——主 skill 会触发，按 Codex 路径写入 `./skills/<name>/SKILL.md` + `./AGENTS.md`。
 
 ---
 
-### Gemini CLI / OpenCode 用户
+### OpenCode 用户
 
-基本步骤参考 Codex 手工方式，把 `~/.codex/skills/` 换成对应 AI 编程工具的 skills 目录。
+OpenCode 同样把 `prompt-engineer` 和 `project-manager` 当作 skill 处理。装三个 skill：
 
-Gemini CLI 的项目记忆约定是 `GEMINI.md`（不是 `AGENTS.md`），生成的 `AGENTS.md` 内容可以手动 include 进 `GEMINI.md`，或直接重命名。
+```bash
+git clone https://github.com/SEAMAN9000/expert-bootstrap.git
+mkdir -p ~/.config/opencode/skills/expert-bootstrap \
+         ~/.config/opencode/skills/prompt-engineer \
+         ~/.config/opencode/skills/project-manager
 
-问题反馈欢迎 [开 issue](https://github.com/SEAMAN9000/expert-bootstrap/issues)。
+# 主 skill（带 templates 目录）
+cp -r expert-bootstrap/skills/expert-bootstrap/* ~/.config/opencode/skills/expert-bootstrap/
+
+# 两位 meta-agent —— 重命名为 SKILL.md
+cp expert-bootstrap/agents/prompt-engineer.md  ~/.config/opencode/skills/prompt-engineer/SKILL.md
+cp expert-bootstrap/agents/project-manager.md  ~/.config/opencode/skills/project-manager/SKILL.md
+```
+
+**装完验证**：在任意 OpenCode 项目里说 "组建专家组"——主 skill 会触发，按 OpenCode 路径写入 `./.opencode/skills/<name>/SKILL.md` + `./AGENTS.md`。
+
+OpenCode 也会扫描 `~/.claude/skills/` 兼容路径，如果你已经在 Claude Code 装过一次，那份也能在 OpenCode 里用。
 
 ## 触发
 
@@ -151,11 +168,11 @@ Gemini CLI 的项目记忆约定是 `GEMINI.md`（不是 `AGENTS.md`），生成
 
 跑完整条管道约一到两分钟。
 
-1. **识别 runtime** — skill 在背景里判定当前跑在 Claude Code / Codex CLI / Gemini CLI / OpenCode 中的哪个。识别结果决定写出来的专家文件能否被原生调度。终端会看到 `mode: claude` 之类一行。
+1. **识别 runtime** — skill 在背景里判定当前跑在 Claude Code / Codex CLI / OpenCode 中的哪个。识别结果决定写出来的专家文件放在哪、用哪份 manifest。终端会看到 `mode: claude` 之类一行。
 2. **问你这个项目想做什么** — 项目目标 + 谁用 + "做完了" 的定义。已有 `brief/goal.md` 或 README 会先读，问的问题更聚焦。
 3. **整理成 `brief/goal.md`，给你看一眼** — 后续所有专家共享的项目共识。**这是整条流程里你唯一需要点头确认的环节。**
 4. **`project-manager` 出场，决定该招哪些专家** — 默认 3-4 人，跨多领域时最多 7 人，每人附一句"为什么这个项目需要他"。它拿不准时会回 `NEED CLARIFICATION: ...` 问你（最多两轮，第三轮失败就停下报错，绝不瞎编）。
-5. **`prompt-engineer` 给每位专家写专属 prompt，落盘** — 同时更新或创建 `CLAUDE.md`（portable 模式下是 `AGENTS.md`），把"以后怎么开会"的规则写进去——什么时候召怀疑席、决议长度上限、冲突怎么分类。
+5. **`prompt-engineer` 给每位专家写专属 prompt，落盘** — 同时更新或创建 manifest 文件（Claude Code 下是 `CLAUDE.md`，Codex / OpenCode 下是 `AGENTS.md`），把"以后怎么开会"的规则写进去——什么时候召怀疑席、决议长度上限、冲突怎么分类。
 
 ## 跑完后项目里多了什么
 
@@ -170,13 +187,24 @@ your-project/
 └── CLAUDE.md          ← 议事规则追加在末尾
 ```
 
-**Codex 等 portable AI 编程工具用户**：
+**Codex CLI 用户**：
 
 ```
 your-project/
 ├── brief/goal.md
 ├── skills/<expert-1>/SKILL.md
 ├── skills/<expert-2>/SKILL.md
+├── ...
+└── AGENTS.md          ← 议事规则追加在末尾
+```
+
+**OpenCode 用户**：
+
+```
+your-project/
+├── brief/goal.md
+├── .opencode/skills/<expert-1>/SKILL.md
+├── .opencode/skills/<expert-2>/SKILL.md
 ├── ...
 └── AGENTS.md          ← 议事规则追加在末尾
 ```

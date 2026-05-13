@@ -1,6 +1,6 @@
 ---
 name: expert-bootstrap
-description: 仅当用户明确要求为某项目搭建专家组 / 专家委员会 / 专家团时调用。会先检测 AI 编程工具（Claude Code 还是 portable），一次性交互式抓取项目目标，然后自动精炼目标、通过 project-manager 设计专家名册、通过 prompt-engineer 精修每位专家的 system prompt，并按运行时把产物写到对应位置（Claude Code 上是 `./.claude/agents/<name>.md` + `CLAUDE.md`，其他 AI 编程工具用 Codex 验证过的 `./skills/<name>/SKILL.md` + `AGENTS.md`），最后给出可粘贴的首次议会题。规范触发短语（须精确匹配，任一即可，中英文均可）：`/expert-bootstrap`、"组建专家组"、"搭建专家组"、"初始化专家组"、"召集专家组"、"成立专家委员会"、"set up the experts"、"build the expert council"、"initialize the expert council"、"convene the expert council"、"form the expert committee"。泛义的"启动项目 / 新项目 / start a new project / let's spin up a team"等近义表达**不**触发本 skill——它们会落到 `superpowers:brainstorming`（如装了）。
+description: 仅当用户明确要求为某项目搭建专家组 / 专家委员会 / 专家团时调用。会先检测 AI 编程工具（Claude Code / Codex CLI / OpenCode），一次性交互式抓取项目目标，然后自动精炼目标、通过 project-manager 设计专家名册、通过 prompt-engineer 精修每位专家的 system prompt，并按运行时把产物写到对应位置（Claude Code 是 `./.claude/agents/<name>.md` + `CLAUDE.md`；Codex CLI 是 `./skills/<name>/SKILL.md` + `AGENTS.md`；OpenCode 是 `./.opencode/skills/<name>/SKILL.md` + `AGENTS.md`），最后给出可粘贴的首次议会题。规范触发短语（须精确匹配，任一即可，中英文均可）：`/expert-bootstrap`、"组建专家组"、"搭建专家组"、"初始化专家组"、"召集专家组"、"成立专家委员会"、"set up the experts"、"build the expert council"、"initialize the expert council"、"convene the expert council"、"form the expert committee"。泛义的"启动项目 / 新项目 / start a new project / let's spin up a team"等近义表达**不**触发本 skill——它们会落到 `superpowers:brainstorming`（如装了）。
 ---
 
 # 专家组搭建（Council Bootstrap）
@@ -10,31 +10,34 @@ description: 仅当用户明确要求为某项目搭建专家组 / 专家委员�
 ## 前置条件
 
 - 当前工作目录是项目根。如果存在歧义，问一次。
-- `prompt-engineer` 与 `project-manager` 必须可用——要么作为原生 subagent（`Agent(subagent_type="…")`），要么以 inline-prompt 形式回退（ AI 编程工具无 subagent 派发能力时）。
+- `prompt-engineer` 与 `project-manager` 必须可用——要么作为原生 subagent（`Agent(subagent_type="…")`），要么作为同名 skill 被 AI 编程工具加载（Codex / OpenCode 把它们当 skill 处理）。
 - 目录按需创建。**Step 4 之前不要预创建任何东西。**
 
 ---
 
 ## Step −1 · 运行时检测（静默，Step 0 之前）
 
-整次运行**只决定一次**部署模式并记住。按优先级匹配，**首条命中即停**：
+整次运行**只决定一次**部署模式并记住。三种模式：`claude` / `codex` / `opencode`。按优先级匹配，**首条命中即停**：
 
-1. **文件系统信号（最强）** —— `./.claude/` 是否存在于项目根，或 `~/.claude/` 是否存在于用户主目录？任一为是 → `claude` 模式。用 `Glob` 或等价能力检查。
-2. **工具可用性信号** —— 当前是否存在 `Agent` 工具，且接受 `subagent_type` 参数，**且** `subagent_type="prompt-engineer"` 可调用（即 meta-agent 已注册为原生 subagent）？是 → `claude` 模式。
-3. **对话信号** —— 用户在本次会话里是否显式说出 AI 编程工具名（例如 "我在 Codex CLI"）？尊重它。
-4. **缺省** —— `portable` 模式。采用 Codex CLI 验证过的项目级加载约定（`./AGENTS.md` + `./skills/<name>/SKILL.md`），这也是 agentskills.io 收敛的方向；Gemini CLI、OpenCode 等同类 AI 编程工具对这套约定的支持度未独立验证，但路径形态最有命中机会。
+1. **对话信号（最强）** —— 系统提示词或环境上下文是否明确披露宿主名？
+   - 出现 "Claude Code" / "Anthropic CLI" → `claude` 模式
+   - 出现 "Codex CLI" / "OpenAI Codex" → `codex` 模式
+   - 出现 "OpenCode" / "opencode.ai" → `opencode` 模式
+2. **工具可用性信号** —— 当前是否存在 `Agent` 工具，且接受 `subagent_type` 参数，**且** `subagent_type="prompt-engineer"` 可调用？是 → `claude` 模式。
+3. **文件系统信号** —— 项目根存在 `./.claude/` → `claude`；存在 `./.opencode/` → `opencode`；存在 `./skills/` 但前两者都不存在 → `codex`。用 `Glob` 或等价能力检查。
+4. **用户显式声明** —— 用户在本次会话里说 "我在 X" → 尊重它。
+5. **缺省** —— `codex` 模式。无法分辨时按 Codex 处理（项目根 `./skills/` + `./AGENTS.md` 是最被广泛遵守的非 Claude 约定）。
 
 | 模式 | 专家文件 | manifest 文件 | 文件结构 |
 |---|---|---|---|
 | `claude` | `./.claude/agents/<name>.md` | `./CLAUDE.md` | 扁平：每位专家一个 .md |
-| `portable` | `./skills/<name>/SKILL.md` | `./AGENTS.md` | 嵌套：每位专家一个文件夹，内固定名 `SKILL.md` |
+| `codex` | `./skills/<name>/SKILL.md` | `./AGENTS.md` | 嵌套：每位专家一个文件夹，内固定名 `SKILL.md` |
+| `opencode` | `./.opencode/skills/<name>/SKILL.md` | `./AGENTS.md` | 嵌套：在 `.opencode/skills/` 下，每位专家一个文件夹 |
 
 Step 0 之前用**单行**宣告检测结果，便于用户纠错：
-`检测到 <mode> 模式，专家将写入 <expert_dir>。如需切换回复 "切换 portable" 或 "切换 claude"。`
+`检测到 <mode> 模式，专家将写入 <expert_dir>。如需切换回复 "切换 claude" / "切换 codex" / "切换 opencode"。`
 
-> 调度语义提醒（仅 portable 模式相关）：Codex/Gemini 等 AI 编程工具的 skill 机制是"加载到当前上下文照做"，**不是** Claude Code 的"并行派发独立子 LLM"。议会式"多位专家同时发言"在 portable 模式下会退化为**顺序加载 + 顺序回答**——文件依然有效，但失去并行隔离。本 skill 不为此发出错误，由用户接受。
-
-检测到的模式（`claude` 或 `portable`）就是 Step 2–3 传给 project-manager 和 prompt-engineer 的 **runtime_mode** 值，整次运行牢记。
+检测到的模式（`claude` / `codex` / `opencode`）就是 Step 2–3 传给 project-manager 和 prompt-engineer 的 **runtime_mode** 值，整次运行牢记。
 
 ---
 
@@ -71,7 +74,7 @@ Step 0 之前用**单行**宣告检测结果，便于用户纠错：
 重新读取 `brief/goal.md`。派发 `project-manager`，传入**两项**输入：
 
 1. `brief/goal.md` 的内容。
-2. 一行 `runtime_mode: <claude|portable>`（Step −1 检测出的值）。这会激活对应的黑名单层级：`claude` 模式下 project-manager 应用完整的工具自带 skill 避让表；`portable` 模式下仅跨平台行（anthropic-skills / 平台 skill 行）默认激活，superpowers 行**不**默认激活（除非用户明示有）。
+2. 一行 `runtime_mode: <claude|codex|opencode>`（Step −1 检测出的值）。这会激活对应的黑名单层级：`claude` 模式下 project-manager 应用完整的工具自带 skill 避让表；`codex` / `opencode` 模式下仅跨平台行（anthropic-skills / 平台 skill 行）默认激活，superpowers 行**不**默认激活（除非用户明示有）。
 
 它会返回一个 YAML 名册，3–4 位专家（仅当项目确实跨多个不相交领域时才到 7）。
 
@@ -100,7 +103,8 @@ Step 0 之前用**单行**宣告检测结果，便于用户纠错：
 每位专家的目标路径**取决于 Step −1 的模式**：
 
 - **claude 模式** —— 写入 `./.claude/agents/<name>.md`（扁平：单文件直接落在 agents 目录下）。
-- **portable 模式** —— 先 `mkdir -p ./skills/<name>/`，再写入 `./skills/<name>/SKILL.md`（嵌套：每位专家一个文件夹，内含固定名 `SKILL.md`——这是 Codex CLI 验证过的项目级 skill 加载约定）。
+- **codex 模式** —— 先 `mkdir -p ./skills/<name>/`，再写入 `./skills/<name>/SKILL.md`（嵌套：项目根的 `./skills/` 目录下每位专家一个文件夹，内含固定名 `SKILL.md`）。
+- **opencode 模式** —— 先 `mkdir -p ./.opencode/skills/<name>/`，再写入 `./.opencode/skills/<name>/SKILL.md`（嵌套：OpenCode 项目专属目录 `./.opencode/skills/`，结构同 codex）。
 
 **剥掉** prompt-engineer 外层的 markdown 围栏。
 
@@ -118,20 +122,20 @@ description: <一句话触发场景>
 接着写 manifest 文件：
 
 - **claude 模式** → `./CLAUDE.md`，从 `templates/CLAUDE.md.tpl` 填充
-- **portable 模式** → `./AGENTS.md`，从 `templates/AGENTS.md.tpl` 填充
+- **codex / opencode 模式** → `./AGENTS.md`，从 `templates/AGENTS.md.tpl` 填充（两种模式共用此 manifest 约定，只是 `{{EXPERT_DIR}}` 不同）
 
 替换 token：
 
 - `{{PROJECT_BRIEF}}` → `brief/goal.md` 的首行
 - `{{ROSTER_TABLE}}` → 一个 `name | title | why_needed` 的 markdown 表
 - `{{COUNCIL_DATE}}` → 今日日期（YYYY-MM-DD）
-- `{{EXPERT_DIR}}` → claude 模式 `./.claude/agents/`；portable 模式 `./skills/`
-- `{{EXPERT_FILE_PATTERN}}` → claude 模式 `<expert_dir><name>.md`；portable 模式 `<expert_dir><name>/SKILL.md`
+- `{{EXPERT_DIR}}` → claude 模式 `./.claude/agents/`；codex 模式 `./skills/`；opencode 模式 `./.opencode/skills/`
+- `{{EXPERT_FILE_PATTERN}}` → claude 模式 `<expert_dir><name>.md`；codex / opencode 模式 `<expert_dir><name>/SKILL.md`
 - `{{FIRST_MEETING_PROMPT}}` → 见 Step 5——这同一行也会在就位公告里出现
 
 若 manifest 文件**已存在**，**不要覆写**。仅替换 `<!-- expert-bootstrap:begin -->` 与 `<!-- expert-bootstrap:end -->` 这两行哨兵之间的内容。若哨兵不存在，**追加**一次（连同哨兵一起包裹）。
 
-若名册缩水后残留旧专家产物（claude 模式：孤立的 `<old-name>.md`；portable 模式：孤立的 `<old-name>/` 文件夹），**Step 5 公告里列为"孤儿（可手动删除）"**——不要自动删。
+若名册缩水后残留旧专家产物（claude 模式：孤立的 `<old-name>.md`；codex / opencode 模式：孤立的 `<old-name>/` 文件夹），**Step 5 公告里列为"孤儿（可手动删除）"**——不要自动删。
 
 ---
 
@@ -143,7 +147,7 @@ description: <一句话触发场景>
 🎓 专家组已就位，<N> 席待命
 
   goal:    <brief/goal.md 第一行>
-  mode:    <claude | portable>
+  mode:    <claude | codex | opencode>
   experts: <expert_dir>
            - <name1>  (<一句话 title>)
            - <name2>  (<一句话 title>)
@@ -171,7 +175,7 @@ description: <一句话触发场景>
 - **不要跳过 Step 0**——状态 B/C 下"省一步"换来的是稀薄的 brief，必然产出稀薄的名册。
 - **Step 1–4 不要插入用户确认 prompt**——除 Step 2 的 `NEED CLARIFICATION:` 逃生口之外的任何"再问一下"都违约。一次确认、一次自治的承诺源头在这里。
 - **不要把专家 prompt 内联进你自己的上下文**——永远派发 prompt-engineer 去写。
-- **不要把专家写到 `~/.claude/agents/` 或 `~/.codex/skills/`**（全局位置）。永远按检测到的模式写到**项目本地**——claude 模式下 `./.claude/agents/`，portable 模式下 `./skills/`。
+- **不要把专家写到 `~/.claude/agents/`、`~/.codex/skills/`、`~/.config/opencode/skills/` 等全局位置**。永远按检测到的模式写到**项目本地**——claude 模式下 `./.claude/agents/`，codex 模式下 `./skills/`，opencode 模式下 `./.opencode/skills/`。
 - **运行中途不要手动改 YAML 名册或精修后的 prompt**——重新派发对应 meta-agent。
 - **不要覆写既有的 manifest 文件**——用哨兵包裹的替换。
 - **不要持久化 roster.yaml 或 state.json**——本次运行是 one-shot。唯一的耐久产物是：`brief/goal.md`、`<expert_dir>/*.md` 与 manifest 文件。

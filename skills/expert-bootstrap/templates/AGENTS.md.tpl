@@ -1,16 +1,14 @@
 # 项目：{{PROJECT_BRIEF}}
 
-> 专家组由 `/expert-bootstrap` 于 {{COUNCIL_DATE}} 搭建（portable 模式）。
+> 专家组由 `/expert-bootstrap` 于 {{COUNCIL_DATE}} 搭建。
 
 <!-- expert-bootstrap:begin -->
 
 ## 专家组（Expert Council）
 
-本项目使用一组项目本地领域专家，活在 `{{EXPERT_DIR}}` 下——每位专家是一个文件夹 `<name>/`，内含固定名 `SKILL.md`，这是 Codex CLI 项目级 skill 加载约定。
+本项目使用一组项目本地领域专家，活在 `{{EXPERT_DIR}}` 下——每位专家是一个文件夹 `<name>/`，内含固定名 `SKILL.md`。
 
-**Codex CLI** 在项目根目录会自动扫描 `./skills/*/SKILL.md` 并按 frontmatter 的 `description` 触发；**其它 AI 编程工具**手动 `@` 派发对应 `SKILL.md` 或贴进对话作为角色 prompt 使用。
-
-> 注意：议会式"多位专家并行发言"在原生 sub-agent 派发的 AI 编程工具（如 Claude Code）下才能完整运行；Codex 等"加载到当前上下文"的 AI 编程工具里，议会会退化为**顺序加载 + 顺序回答**——结构有效，但失去并行隔离。
+**Codex CLI** 在项目根目录自动扫描 `./skills/*/SKILL.md`，**OpenCode** 在 `./.opencode/skills/*/SKILL.md` 自动扫描，按 frontmatter 的 `description` 触发并支持并行 sub-agent 派发。
 
 ### 名册（Roster）
 
@@ -88,7 +86,7 @@
 2. **现状快照** —— 读 `{{EXPERT_DIR}}*/SKILL.md` 全部 frontmatter，解析出 `existing_roster:` 列表（每条含 `name / title / decides / responsibilities / must_not`）。
 3. **派发 `project-manager`（extend 模式）** —— 一次性传入：
    - `mode: extend`
-   - `runtime_mode: portable`
+   - `runtime_mode: <codex|opencode>`（由调用方填入当次模式）
    - `existing_roster:` （上一步快照）
    - `addition_request: <用户那句话 + 必要的反问澄清>`
    - `brief/goal.md` 内容作为项目背景。
@@ -98,7 +96,7 @@
    - `existing_roster:` （同第 2 步）
    - `extension_rationale: <project-manager 返回的 why_needed>`
    - `role_brief_for_prompt_engineer:` （来自 `new_expert`）
-   - `runtime_mode: portable`
+   - `runtime_mode: <codex|opencode>`（由调用方填入当次模式）
    返回带 frontmatter 的完整 agent 文件。
 6. **落盘** —— `mkdir -p {{EXPERT_DIR}}<new-name>/`，写入 `{{EXPERT_DIR}}<new-name>/SKILL.md`（剥外层 fence）。**不要覆盖现有专家文件夹**——重名时 prompt-engineer 已经按契约返回 `NEED CLARIFICATION:`，应在第 5 步处理掉。
 7. **更新名册表** —— 在本文件 `### 名册` 表末尾**追加一行** `| <name> | <title> | <why_needed> |`。如有 `sibling_adjustments_suggested` 且用户在第 4 步已批准，对应 sibling 的 `must_not` 不在本文件更新——重新派发 `prompt-engineer`（Mode B）针对该 sibling 走 B 路径，把 `must_not` 改进去并整文件覆盖。

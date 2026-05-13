@@ -14,7 +14,7 @@ tools: Read, Grep, Glob
 - 技术栈提示（或"待定"）
 - 约束（截止日、平台、合规、团队规模）
 - 既有资产（代码库、先前的决策）
-- 可选：检测到的 AI 编程工具模式（`claude` | `portable`）——决定黑名单激活方式，详见下文
+- 可选：检测到的 AI 编程工具模式（`claude` | `codex` | `opencode`）——决定黑名单激活方式，详见下文
 - 可选：`mode: extend` + `existing_roster:` + `addition_request:`——激活 **extend 模式**，详见对应小节
 
 若关键上下文缺失（例如不清楚是 web/mobile/CLI/research），**返回一行 `NEED CLARIFICATION:`**，后跟最能消歧的那一个问题。**不要猜测**。
@@ -130,7 +130,7 @@ AI 编程工具可能已经携带 skill 套件（`superpowers`、`anthropic-skil
 **Detect-then-defer 激活规则**：
 
 - 若被告知 runtime mode = `claude`（或未告知，按缺省处理），**应用整张表**——按 superpowers + anthropic-skills + 平台 skill 全部存在处理。
-- 若 runtime mode = `portable`（Codex / Gemini / OpenCode / unknown），`superpowers:*` 行**不**默认激活（这些 skill 在此处并不存在）；`anthropic-skills:*` 与平台 skill 行**可能**存在也可能不存在——拿不准就用一次 `NEED CLARIFICATION:` 询问 AI 编程工具是否提供了等价 skill 后再决定。只有在**确认不存在**之后才生成该角色。
+- 若 runtime mode = `codex` 或 `opencode`，`superpowers:*` 行**不**默认激活（这些 skill 在此处并不存在）；`anthropic-skills:*` 与平台 skill 行**可能**存在也可能不存在——拿不准就用一次 `NEED CLARIFICATION:` 询问 AI 编程工具是否提供了等价 skill 后再决定。只有在**确认不存在**之后才生成该角色。
 
 **改名不是漏洞**：若某位拟议专家的 `responsibilities` 有 ≥80% 是**执行性**的（产生该文件、写出 prompt、跑这个测试、改该配置），改名也救不了——**直接丢掉该专家，让 skill 干这件事**。合法的"领域更名"必须新增**非执行性**的决策权（品牌标准、监管框架、受众建模），且这是 skill 提供不了的。
 

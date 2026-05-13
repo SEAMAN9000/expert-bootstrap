@@ -12,7 +12,7 @@
     {
       "name": "expert-bootstrap",
       "source": "./",
-      "description": "Bootstrap a project-local council of generated domain experts. Two meta-agents (prompt-engineer + project-manager) read your project goal and design a tailored 3–4 expert roster on the fly, written to ./.claude/agents/ on Claude Code or ./skills/<name>/SKILL.md on portable hosts (Codex CLI, etc.). Triggers on: /expert-bootstrap, 组建专家组, set up the experts, build the expert council, convene the expert council, form the expert committee.",
+      "description": "Bootstrap a project-local council of generated domain experts on Claude Code, Codex CLI, or OpenCode. Two meta-agents (prompt-engineer + project-manager) read your project goal and design a tailored 3–4 expert roster on the fly, written to the runtime's native discovery path. Triggers on: /expert-bootstrap, 组建专家组, set up the experts, build the expert council, convene the expert council, form the expert committee.",
       "version": "0.2.0",
       "category": "agents",
       "keywords": [

@@ -11,7 +11,7 @@ Starting a new project but stuck on "which feature to build next"? Team split be
 ## Fits / does NOT fit
 
 ✅ **Fits**
-- Starting a new project on Claude Code / Codex CLI or similar AI coding tools, wanting a **project-local, advisory** group of domain experts
+- Starting a new project on Claude Code / Codex CLI / OpenCode, wanting a **project-local, advisory** group of domain experts
 - Projects spanning 2+ disjoint domains (hardware + compliance + frontend), where multi-position arbitration matters
 - Expert responsibilities that shift with project type — "frontend" in a SaaS dashboard worries about state and permissions; the same label in a marketing landing page worries about first-paint and SEO
 
@@ -28,34 +28,37 @@ Starting a new project but stuck on "which feature to build next"? Team split be
 
 ## Runtime support
 
-### ✅ Claude Code · Native
+### ✅ Claude Code
 
-- **Write path**: `./.claude/agents/<name>.md` + `CLAUDE.md`
-- **Dispatch**: Lead agent uses `Agent(subagent_type=...)` to **dispatch independent LLM instances in parallel** → true parallel council
+- **Expert path**: `./.claude/agents/<name>.md` (flat: one file per expert)
+- **Project memory**: `./CLAUDE.md`
+- **Dispatch**: Lead agent uses `Agent(subagent_type=...)` to dispatch independent LLM instances in parallel
 
-### 🟡 Codex CLI · Portable mode
+### ✅ Codex CLI
 
-- **Write path**: `./skills/<name>/SKILL.md` + `AGENTS.md`
+- **Expert path**: `./skills/<name>/SKILL.md` (nested: one folder per expert)
+- **Project memory**: `./AGENTS.md`
 - **Dispatch**: Codex auto-scans `./skills/` at the project root by frontmatter `description` and dispatches sub-agents in parallel
 
-### 🟡 Gemini CLI / OpenCode · Portable mode
+### ✅ OpenCode
 
-- **Write path**: Same as Codex
-- **Dispatch**: Same portable convention
+- **Expert path**: `./.opencode/skills/<name>/SKILL.md` (nested: one folder per expert)
+- **Project memory**: `./AGENTS.md`
+- **Dispatch**: OpenCode auto-scans `./.opencode/skills/` by frontmatter `description` and dispatches sub-agents in parallel
 
 ---
 
-The skill auto-detects the AI coding tool at Step −1 from contextual signals (Claude Code's system prompt, Codex environment cues, etc.) — no user configuration. If detection is wrong, reply `切换 portable` / `switch to portable` (or `switch to claude`) to override.
+The skill auto-detects the AI coding tool at Step −1 from contextual signals (system prompt or environment cues) — no user configuration. If detection is wrong, reply `switch to claude` / `switch to codex` / `switch to opencode` (or the Chinese equivalents) to override.
 
 ## Install
 
 ### Cross-tool · Let the AI read the README and install (recommended)
 
-Copy the entire block below and paste it into Claude Code or Codex CLI:
+Copy the entire block below and paste it into Claude Code / Codex CLI / OpenCode:
 
 > Please install this skill: `https://github.com/SEAMAN9000/expert-bootstrap`
 >
-> First identify whether you're running on Claude Code or Codex CLI, then read the matching "Install" section in the README and execute the manual method. After installation, tell me the trigger keywords.
+> First identify whether you're running on Claude Code, Codex CLI, or OpenCode, then read the matching "Install" section in the README and execute the manual method. After installation, tell me the trigger keywords.
 
 The AI will read the README, run the `git clone` + `cp` commands, and tell you when it's ready. You don't need to remember any commands.
 
@@ -120,17 +123,31 @@ cp expert-bootstrap/agents/prompt-engineer.md  ~/.codex/skills/prompt-engineer/S
 cp expert-bootstrap/agents/project-manager.md  ~/.codex/skills/project-manager/SKILL.md
 ```
 
-**Verify**: in any Codex project, say "set up the experts" — the main skill should fire and write artifacts using the portable paths described in the [Runtime support](#runtime-support) section.
+**Verify**: in any Codex project, say "set up the experts" — the main skill should fire and write artifacts to `./skills/<name>/SKILL.md` + `./AGENTS.md`.
 
 ---
 
-### Gemini CLI / OpenCode users
+### OpenCode users
 
-Follow the Codex manual method, replacing `~/.codex/skills/` with the host's skills directory.
+OpenCode also treats `prompt-engineer` and `project-manager` as ordinary skills. Install all three:
 
-Gemini CLI's project-memory convention is `GEMINI.md` (not `AGENTS.md`). The generated `AGENTS.md` content can be `include`d into `GEMINI.md` manually, or simply renamed.
+```bash
+git clone https://github.com/SEAMAN9000/expert-bootstrap.git
+mkdir -p ~/.config/opencode/skills/expert-bootstrap \
+         ~/.config/opencode/skills/prompt-engineer \
+         ~/.config/opencode/skills/project-manager
 
-Issues welcome at [GitHub issues](https://github.com/SEAMAN9000/expert-bootstrap/issues).
+# Main skill (with its templates/ directory)
+cp -r expert-bootstrap/skills/expert-bootstrap/* ~/.config/opencode/skills/expert-bootstrap/
+
+# Two meta-agents — renamed to SKILL.md
+cp expert-bootstrap/agents/prompt-engineer.md  ~/.config/opencode/skills/prompt-engineer/SKILL.md
+cp expert-bootstrap/agents/project-manager.md  ~/.config/opencode/skills/project-manager/SKILL.md
+```
+
+**Verify**: in any OpenCode project, say "set up the experts" — the main skill should fire and write artifacts to `./.opencode/skills/<name>/SKILL.md` + `./AGENTS.md`.
+
+OpenCode also scans `~/.claude/skills/` for compatibility, so if you've already installed under Claude Code, that copy works under OpenCode too.
 
 ## Trigger
 
@@ -151,11 +168,11 @@ Once installed, in your project directory, type any one of these **exact** phras
 
 The full pipeline takes ~1–2 minutes.
 
-1. **Runtime detection** — the skill silently identifies whether you're on Claude Code / Codex CLI / Gemini CLI / OpenCode. The result decides whether the generated expert files can be dispatched natively. You'll see one line like `mode: claude` in the terminal.
+1. **Runtime detection** — the skill silently identifies whether you're on Claude Code / Codex CLI / OpenCode. The result decides where the generated expert files land and which manifest file to use. You'll see one line like `mode: claude` in the terminal.
 2. **Asks what the project is actually about** — goal + who uses it + what "done" means. If `brief/goal.md` or a README already exists, it's read first and the questions get more specific.
 3. **Distills your answers into `brief/goal.md`, shown for review** — this becomes the shared context for every expert. **This is the only step that requires your approval.**
 4. **`project-manager` enters and chooses the roster** — default 3–4 seats, up to 7 for cross-domain projects, each with a one-line "why this project needs them". When genuinely uncertain it replies `NEED CLARIFICATION: ...` (max two rounds; on the third failure it halts and reports — no fabrication).
-5. **`prompt-engineer` writes each expert's system prompt and persists them** — then updates or creates `CLAUDE.md` (or `AGENTS.md` in portable mode) with the meeting rules: when to summon the skeptic seat, resolution length cap, conflict triage.
+5. **`prompt-engineer` writes each expert's system prompt and persists them** — then updates or creates the manifest file (`CLAUDE.md` on Claude Code, `AGENTS.md` on Codex / OpenCode) with the meeting rules: when to summon the skeptic seat, resolution length cap, conflict triage.
 
 ## What ends up in your project after a run
 
@@ -170,13 +187,24 @@ your-project/
 └── CLAUDE.md          ← council rules appended at the end
 ```
 
-**Codex / portable hosts users**:
+**Codex CLI users**:
 
 ```
 your-project/
 ├── brief/goal.md
 ├── skills/<expert-1>/SKILL.md
 ├── skills/<expert-2>/SKILL.md
+├── ...
+└── AGENTS.md          ← council rules appended at the end
+```
+
+**OpenCode users**:
+
+```
+your-project/
+├── brief/goal.md
+├── .opencode/skills/<expert-1>/SKILL.md
+├── .opencode/skills/<expert-2>/SKILL.md
 ├── ...
 └── AGENTS.md          ← council rules appended at the end
 ```
