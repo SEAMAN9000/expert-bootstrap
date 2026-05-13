@@ -1,7 +1,7 @@
 {
   "name": "expert-bootstrap",
   "description": "Bootstrap a project-local council of generated domain experts on Claude Code, Codex CLI, or OpenCode. Two meta-agents (prompt-engineer + project-manager) generate a tailored expert roster per project, written to the runtime's native discovery path: ./.claude/agents/<name>.md + CLAUDE.md on Claude Code; ./skills/<name>/SKILL.md + AGENTS.md on Codex CLI; ./.opencode/skills/<name>/SKILL.md + AGENTS.md on OpenCode.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": {
     "name": "SEAMAN9000"
   },
