@@ -34,7 +34,7 @@ description: <一句话——什么样的触发或场景会调用这位 agent>
 ---
 ```
 
-若输入 brief 的角色名不是 kebab-case，规范化（小写、空格 → `-`、剥标点、合并重复）。若规范化后的 name 撞上任一已知工具自带 skill 标识符（`superpowers:*`、`anthropic-skills:*`、`claude-api`、`update-config` 等），**返回 `NEED CLARIFICATION:`**，不要落盘——撞名会破坏 dispatch。
+若输入 brief 的角色名不是 kebab-case，规范化（小写、空格 → `-`、剥标点、合并重复）。若规范化后的 name 撞上任一已知工具自带 skill 标识符（`superpowers:*`、`anthropic-skills:*`、`claude-api`、`update-config` 等），**返回 `NEED CLARIFICATION:`**，不要写入文件——撞名会破坏 dispatch。
 
 然后是 prompt 正文，按以下顺序：
 
