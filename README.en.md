@@ -8,6 +8,119 @@
 
 Starting a new project but stuck on "which feature to build next"? Team split between "polish the content first or polish the tech first"? These cross-domain tradeoffs are hard to resolve alone — easy to get trapped in your own blind spots. This skill builds 3–4 project-tailored advisors plus a council ruleset right inside your project. When a cross-domain question comes up, multiple experts answer in parallel, conflicts get triaged, and you get a ≤400-word resolution with preserved disagreements.
 
+## What it looks like
+
+Here is the whole thing, from an empty directory to a council that's ready to meet. Lines starting with `>` are what you type; everything else is what comes back.
+
+### ① Build it · you answer three questions
+
+```
+~/my-research $ claude
+
+> set up the experts
+
+  mode: claude
+  What is this project? One sentence is enough — details can come later.
+
+> A desk study on how AI coding assistants (Copilot / Cursor / Claude Code) get
+  used across developers of different skill levels, and which repeatedly-voiced
+  needs no product has met yet.
+
+  Desk study — so sources are published literature, industry surveys, and
+  official changelogs only, with no first-party interviews. Right? And how
+  long is the time box?
+
+> Right, desk only. 4 to 6 weeks.
+
+  How do you slice "different skill levels" — years of experience, role, or
+  fluency with AI tools?
+
+> Two dimensions: AI fluency (first contact / daily use / deep integration) ×
+  role (student / junior / senior / solo developer). 12 cells.
+
+  Wrote it up as brief/goal.md — take a look:
+
+    Question   usage patterns and unmet needs per cell of a 12-cell matrix
+    Boundary   desk only, public sources, no first-party data collection
+    Done when  ≥2 independent sources per cell + unmet-needs list + 3 gaps
+    Time box   4–6 weeks
+
+  Reply y to continue, or just tell me what to change.
+
+> y
+
+  Designing roster ..... 4 experts
+  Writing prompts ...... 4/4
+
+  ✅ Council ready:
+
+     my-research/
+     ├── brief/goal.md
+     ├── .claude/agents/hci-se-evidence-curator.md
+     ├── .claude/agents/industry-signal-analyst.md
+     ├── .claude/agents/research-synthesis-lead.md
+     ├── .claude/agents/research-comms-skeptic.md   ← skeptic seat
+     └── CLAUDE.md   ← meeting rules live here
+
+  Paste this back into the chat to open your first council meeting:
+
+    The "solo developer × deep AI integration" cell: academic work almost never
+    stratifies by solo developer, and large industry surveys fold these people
+    into "other" at under 8%. Do we lower the evidence bar and fill the cell,
+    leave it empty as a research gap, or merge the dimension?
+```
+
+Everything you did: answered three questions, nodded once. The 1–2 minutes in between run unattended.
+
+### ② Use it · hold a meeting
+
+Paste that last line back. From then on, plain questions are enough to convene.
+
+```
+> The "solo developer × deep AI integration" cell: academic work almost… (pasted)
+
+  Question hits 3 experts → skeptic seat required. 4 speak in parallel.
+
+  hci-se-evidence-curator
+    Empirical work stratifying by solo developer is close to nonexistent. The
+    nearest neighbor is OSS solo-maintainer research — usable as a work-pattern
+    analogy, too weak to carry a usage-pattern claim.
+
+  industry-signal-analyst
+    Indie Hackers and MicroConf still give us signal, but both are self-selected
+    samples. Upgrading evidence strength via "multiple sources agreeing" only
+    holds if the two sources are genuinely independent.
+
+  research-synthesis-lead
+    I'd lower the bar, fill the cell, and footnote it. The matrix stays whole
+    and the reader can still see the evidence is thin.
+
+  research-comms-skeptic (skeptic seat, speaks last)
+    Those two communities overlap heavily — they don't add up to two independent
+    sources. Fill the cell and readers remember the text, never the footnote.
+    The misreading risk outweighs the gain.
+
+  ── RESOLUTION ───────────────────────────────────
+  Leave the cell empty and nominate it as a research-gap candidate (no fill, no
+  merge). Every empty cell carries the footnote "evidence below this report's
+  bar; whether a difference exists is unknown", and the reader's guide states
+  plainly that empty ≠ no difference.
+
+  PRESERVED DISAGREEMENT
+  · Pending evidence: no demographic data on how far the two communities
+    overlap. Revisit once someone digs it up.
+  · Kept on record: synthesis-lead's "fill + extrapolation label" option goes
+    into the methodology appendix, marked "considered, dropped over misreading
+    risk".
+
+  ACTION ITEMS
+  · [synthesis-lead] redefine "independent source" as "non-overlapping audience"
+  · [industry-signal-analyst] find overlap evidence before the midpoint
+  ─────────────────────────────────────────────────
+```
+
+Your own roster will differ from this one — who gets hired is decided on the spot by `project-manager` after it reads your goal. What stays fixed is the shape: a goal file under 300 words, one file per expert, and every resolution in three parts — resolution, preserved disagreement, action items.
+
 ## Fits / does NOT fit
 
 ✅ **Fits**
