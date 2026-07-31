@@ -141,6 +141,8 @@ Your own roster will differ from this one — who gets hired is decided on the s
 
 ## Runtime support
 
+All three runtimes are verified in real runs — trigger, roster generation, and writing into the project were each exercised end to end on the runtime itself.
+
 ### ✅ Claude Code
 
 - **Expert path**: `./.claude/agents/<name>.md` (flat: one file per expert)
