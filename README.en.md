@@ -151,9 +151,9 @@ All three runtimes are verified in real runs — trigger, roster generation, and
 
 ### ✅ Codex CLI
 
-- **Expert path**: `./skills/<name>/SKILL.md` (nested: one folder per expert)
+- **Expert path**: `./.agents/skills/<name>/SKILL.md` (nested: one folder per expert)
 - **Project memory**: `./AGENTS.md`
-- **Dispatch**: Codex auto-scans `./skills/` at the project root by frontmatter `description` and dispatches sub-agents in parallel
+- **Dispatch**: Codex auto-scans `./.agents/skills/` at the project root by frontmatter `description` and dispatches sub-agents in parallel
 
 ### ✅ OpenCode
 
@@ -238,7 +238,7 @@ cp expert-bootstrap/agents/prompt-engineer.md  ~/.codex/skills/prompt-engineer/S
 cp expert-bootstrap/agents/project-manager.md  ~/.codex/skills/project-manager/SKILL.md
 ```
 
-**Verify**: in any Codex project, say "set up the experts" — the main skill should fire and write artifacts to `./skills/<name>/SKILL.md` + `./AGENTS.md`.
+**Verify**: in any Codex project, say "set up the experts" — the main skill should fire and write artifacts to `./.agents/skills/<name>/SKILL.md` + `./AGENTS.md`.
 
 ---
 
@@ -307,8 +307,8 @@ your-project/
 ```
 your-project/
 ├── brief/goal.md
-├── skills/<expert-1>/SKILL.md
-├── skills/<expert-2>/SKILL.md
+├── .agents/skills/<expert-1>/SKILL.md
+├── .agents/skills/<expert-2>/SKILL.md
 ├── ...
 └── AGENTS.md          ← council rules appended at the end
 ```

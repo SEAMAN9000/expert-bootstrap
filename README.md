@@ -139,9 +139,9 @@
 
 ### ✅ Codex CLI
 
-- **专家路径**：`./skills/<name>/SKILL.md`（嵌套：每位专家一个文件夹）
+- **专家路径**：`./.agents/skills/<name>/SKILL.md`（嵌套：每位专家一个文件夹）
 - **项目记忆**：`./AGENTS.md`
-- **调度**：Codex 自动扫描项目根 `./skills/`，按 frontmatter `description` 触发并行 subagent
+- **调度**：Codex 自动扫描项目根 `./.agents/skills/`，按 frontmatter `description` 触发并行 subagent
 
 ### ✅ OpenCode
 
@@ -226,7 +226,7 @@ cp expert-bootstrap/agents/prompt-engineer.md  ~/.codex/skills/prompt-engineer/S
 cp expert-bootstrap/agents/project-manager.md  ~/.codex/skills/project-manager/SKILL.md
 ```
 
-**装完验证**：在任意 Codex 项目里说 "组建专家组"——主 skill 会触发，按 Codex 路径写入 `./skills/<name>/SKILL.md` + `./AGENTS.md`。
+**装完验证**：在任意 Codex 项目里说 "组建专家组"——主 skill 会触发，按 Codex 路径写入 `./.agents/skills/<name>/SKILL.md` + `./AGENTS.md`。
 
 ---
 
@@ -295,8 +295,8 @@ your-project/
 ```
 your-project/
 ├── brief/goal.md
-├── skills/<expert-1>/SKILL.md
-├── skills/<expert-2>/SKILL.md
+├── .agents/skills/<expert-1>/SKILL.md
+├── .agents/skills/<expert-2>/SKILL.md
 ├── ...
 └── AGENTS.md          ← 议事规则追加在末尾
 ```

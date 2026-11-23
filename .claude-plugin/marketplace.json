@@ -13,7 +13,7 @@
       "name": "expert-bootstrap",
       "source": "./",
       "description": "Bootstrap a project-local council of generated domain experts on Claude Code, Codex CLI, or OpenCode. Two meta-agents (prompt-engineer + project-manager) read your project goal and design a tailored 3–4 expert roster on the fly, written to the runtime's native discovery path. Triggers on: /expert-bootstrap, 组建专家组, set up the experts, build the expert council, convene the expert council, form the expert committee.",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "category": "agents",
       "keywords": [
         "expert-council",
