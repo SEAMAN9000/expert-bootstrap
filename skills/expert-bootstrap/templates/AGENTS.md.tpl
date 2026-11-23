@@ -8,7 +8,7 @@
 
 本项目使用一组项目本地领域专家，活在 `{{EXPERT_DIR}}` 下——每位专家是一个文件夹 `<name>/`，内含固定名 `SKILL.md`。
 
-**Codex CLI** 在项目根目录自动扫描 `./skills/*/SKILL.md`，**OpenCode** 在 `./.opencode/skills/*/SKILL.md` 自动扫描，按 frontmatter 的 `description` 触发并支持并行 sub-agent 派发。
+**Codex CLI** 自动扫描项目内的 `./.agents/skills/*/SKILL.md`，**OpenCode** 在 `./.opencode/skills/*/SKILL.md` 自动扫描，按 frontmatter 的 `description` 触发并支持并行 sub-agent 派发。
 
 ### 名册（Roster）
 
