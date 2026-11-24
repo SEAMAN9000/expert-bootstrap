@@ -175,7 +175,7 @@ description: <一句话触发场景>
 - **不要跳过 Step 0**——状态 B/C 下"省一步"换来的是稀薄的 brief，必然产出稀薄的名册。
 - **Step 1–4 不要插入用户确认 prompt**——除 Step 2 的 `NEED CLARIFICATION:` 逃生口之外的任何"再问一下"都违约。一次确认、一次自治的承诺源头在这里。
 - **不要把专家 prompt 内联进你自己的上下文**——永远派发 prompt-engineer 去写。
-- **不要把专家写到 `~/.claude/agents/`、`~/.codex/skills/`、`~/.config/opencode/skills/` 等全局位置**。永远按检测到的模式写到**项目本地**——claude 模式下 `./.claude/agents/`，codex 模式下 `./.agents/skills/`，opencode 模式下 `./.opencode/skills/`。
+- **不要把专家写到 `~/.claude/agents/`、`~/.agents/skills/`、`~/.codex/skills/`、`~/.config/opencode/skills/` 等全局位置**。永远按检测到的模式写到**项目本地**——claude 模式下 `./.claude/agents/`，codex 模式下 `./.agents/skills/`，opencode 模式下 `./.opencode/skills/`。
 - **运行中途不要手动改 YAML 名册或精修后的 prompt**——重新派发对应 meta-agent。
 - **不要覆写既有的 manifest 文件**——用哨兵包裹的替换。
 - **不要持久化 roster.yaml 或 state.json**——本次运行是 one-shot。唯一的耐久产物是：`brief/goal.md`、`<expert_dir>/*.md` 与 manifest 文件。

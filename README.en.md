@@ -211,32 +211,34 @@ If you've installed Codex's official [skill-installer](https://github.com/Compos
 ```bash
 # Main skill
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
-  --repo SEAMAN9000/expert-bootstrap --path skills/expert-bootstrap --name expert-bootstrap
+  --repo SEAMAN9000/expert-bootstrap --path skills/expert-bootstrap --name expert-bootstrap \n  --dest ~/.agents/skills
 
 # Meta-agent: prompt-engineer
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
-  --repo SEAMAN9000/expert-bootstrap --path agents/prompt-engineer.md --name prompt-engineer
+  --repo SEAMAN9000/expert-bootstrap --path agents/prompt-engineer.md --name prompt-engineer \n  --dest ~/.agents/skills
 
 # Meta-agent: project-manager
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
-  --repo SEAMAN9000/expert-bootstrap --path agents/project-manager.md --name project-manager
+  --repo SEAMAN9000/expert-bootstrap --path agents/project-manager.md --name project-manager \n  --dest ~/.agents/skills
 ```
 
 **B · Manual**
 
 ```bash
 git clone https://github.com/SEAMAN9000/expert-bootstrap.git
-mkdir -p ~/.codex/skills/expert-bootstrap \
-         ~/.codex/skills/prompt-engineer \
-         ~/.codex/skills/project-manager
+mkdir -p ~/.agents/skills/expert-bootstrap \
+         ~/.agents/skills/prompt-engineer \
+         ~/.agents/skills/project-manager
 
 # Main skill (with its templates/ directory)
-cp -r expert-bootstrap/skills/expert-bootstrap/* ~/.codex/skills/expert-bootstrap/
+cp -r expert-bootstrap/skills/expert-bootstrap/* ~/.agents/skills/expert-bootstrap/
 
 # Two meta-agents — note they must be renamed to SKILL.md
-cp expert-bootstrap/agents/prompt-engineer.md  ~/.codex/skills/prompt-engineer/SKILL.md
-cp expert-bootstrap/agents/project-manager.md  ~/.codex/skills/project-manager/SKILL.md
+cp expert-bootstrap/agents/prompt-engineer.md  ~/.agents/skills/prompt-engineer/SKILL.md
+cp expert-bootstrap/agents/project-manager.md  ~/.agents/skills/project-manager/SKILL.md
 ```
+
+> Note: the user-level skill location listed in the official Codex docs is `~/.agents/skills/`. The `~/.codex/skills/.system/…` path in the commands above is only where Codex keeps its bundled installer script, not the install target.
 
 **Verify**: in any Codex project, say "set up the experts" — the main skill should fire and write artifacts to `./.agents/skills/<name>/SKILL.md` + `./AGENTS.md`.
 

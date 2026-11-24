@@ -199,32 +199,34 @@ Codex 没有 sub-agent 概念——`prompt-engineer` 和 `project-manager` 在 C
 ```bash
 # 主 skill
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
-  --repo SEAMAN9000/expert-bootstrap --path skills/expert-bootstrap --name expert-bootstrap
+  --repo SEAMAN9000/expert-bootstrap --path skills/expert-bootstrap --name expert-bootstrap \n  --dest ~/.agents/skills
 
 # Meta-agent: prompt-engineer
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
-  --repo SEAMAN9000/expert-bootstrap --path agents/prompt-engineer.md --name prompt-engineer
+  --repo SEAMAN9000/expert-bootstrap --path agents/prompt-engineer.md --name prompt-engineer \n  --dest ~/.agents/skills
 
 # Meta-agent: project-manager
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
-  --repo SEAMAN9000/expert-bootstrap --path agents/project-manager.md --name project-manager
+  --repo SEAMAN9000/expert-bootstrap --path agents/project-manager.md --name project-manager \n  --dest ~/.agents/skills
 ```
 
 **B · 手工**
 
 ```bash
 git clone https://github.com/SEAMAN9000/expert-bootstrap.git
-mkdir -p ~/.codex/skills/expert-bootstrap \
-         ~/.codex/skills/prompt-engineer \
-         ~/.codex/skills/project-manager
+mkdir -p ~/.agents/skills/expert-bootstrap \
+         ~/.agents/skills/prompt-engineer \
+         ~/.agents/skills/project-manager
 
 # 主 skill（带 templates 目录）
-cp -r expert-bootstrap/skills/expert-bootstrap/* ~/.codex/skills/expert-bootstrap/
+cp -r expert-bootstrap/skills/expert-bootstrap/* ~/.agents/skills/expert-bootstrap/
 
 # 两位 meta-agent —— 注意要重命名为 SKILL.md
-cp expert-bootstrap/agents/prompt-engineer.md  ~/.codex/skills/prompt-engineer/SKILL.md
-cp expert-bootstrap/agents/project-manager.md  ~/.codex/skills/project-manager/SKILL.md
+cp expert-bootstrap/agents/prompt-engineer.md  ~/.agents/skills/prompt-engineer/SKILL.md
+cp expert-bootstrap/agents/project-manager.md  ~/.agents/skills/project-manager/SKILL.md
 ```
+
+> 说明：Codex 官方文档列出的个人级技能位置是 `~/.agents/skills/`。上面命令里的 `~/.codex/skills/.system/…` 只是 Codex 自带安装脚本所在的位置，不是安装目标。
 
 **装完验证**：在任意 Codex 项目里说 "组建专家组"——主 skill 会触发，按 Codex 路径写入 `./.agents/skills/<name>/SKILL.md` + `./AGENTS.md`。
 
