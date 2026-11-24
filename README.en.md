@@ -211,15 +211,18 @@ If you've installed Codex's official [skill-installer](https://github.com/Compos
 ```bash
 # Main skill
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
-  --repo SEAMAN9000/expert-bootstrap --path skills/expert-bootstrap --name expert-bootstrap \n  --dest ~/.agents/skills
+  --repo SEAMAN9000/expert-bootstrap --path skills/expert-bootstrap --name expert-bootstrap \
+  --dest ~/.agents/skills
 
 # Meta-agent: prompt-engineer
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
-  --repo SEAMAN9000/expert-bootstrap --path agents/prompt-engineer.md --name prompt-engineer \n  --dest ~/.agents/skills
+  --repo SEAMAN9000/expert-bootstrap --path agents/prompt-engineer.md --name prompt-engineer \
+  --dest ~/.agents/skills
 
 # Meta-agent: project-manager
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
-  --repo SEAMAN9000/expert-bootstrap --path agents/project-manager.md --name project-manager \n  --dest ~/.agents/skills
+  --repo SEAMAN9000/expert-bootstrap --path agents/project-manager.md --name project-manager \
+  --dest ~/.agents/skills
 ```
 
 **B · Manual**
